@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 
 // Owner pages
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
+import HealthBreakdownPage from "./pages/owner/HealthBreakdownPage";
 import InventoryPage from "./pages/owner/InventoryPage";
 import ProductDetailPage from "./pages/owner/ProductDetailPage";
 import AddProductPage from "./pages/owner/AddProductPage";
@@ -57,6 +58,7 @@ const App = () => (
 
             {/* Owner */}
             <Route path="/owner" element={<OwnerDashboard />} />
+            <Route path="/owner/health" element={<HealthBreakdownPage />} />
             <Route path="/owner/inventory" element={<InventoryPage />} />
             <Route path="/owner/product/:id" element={<ProductDetailPage />} />
             <Route path="/owner/product/add" element={<AddProductPage />} />
