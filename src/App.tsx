@@ -58,6 +58,7 @@ const App = () => (
 
             {/* Owner */}
             <Route path="/owner" element={<OwnerDashboard />} />
+            <Route path="/owner/health" element={<HealthBreakdownPage />} />
             <Route path="/owner/inventory" element={<InventoryPage />} />
             <Route path="/owner/product/:id" element={<ProductDetailPage />} />
             <Route path="/owner/product/add" element={<AddProductPage />} />

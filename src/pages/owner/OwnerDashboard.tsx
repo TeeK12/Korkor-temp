@@ -37,7 +37,7 @@ const OwnerDashboard = () => {
         </div>
 
         {/* Health Score */}
-        <div className="bg-card rounded-lg p-4 mb-4 border border-border">
+        <div onClick={() => navigate("/owner/health")} className="bg-card rounded-lg p-4 mb-4 border border-border cursor-pointer active:opacity-80 transition-opacity">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground font-medium">Business Health Score</span>
             <Zap className="w-4 h-4 text-warning" />
