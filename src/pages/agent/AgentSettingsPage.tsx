@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Lock, Building2, ChevronRight, LogOut, Send, Mic, Square, Play, Pause, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, User, Lock, Building2, ChevronRight, LogOut, Send, Mic, Square, Play, Pause, Eye, EyeOff, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
