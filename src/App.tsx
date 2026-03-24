@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 
 // Owner pages
 import OwnerDashboard from "./pages/owner/OwnerDashboard";
+import HealthBreakdownPage from "./pages/owner/HealthBreakdownPage";
 import InventoryPage from "./pages/owner/InventoryPage";
 import ProductDetailPage from "./pages/owner/ProductDetailPage";
 import AddProductPage from "./pages/owner/AddProductPage";
