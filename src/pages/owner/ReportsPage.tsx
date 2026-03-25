@@ -1,20 +1,53 @@
 import { useState } from "react";
-import { Zap, TrendingUp, TrendingDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Zap, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { products } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
+const periods = [
+  { label: "This Week", key: "this-week", salesIdx: 6 },
+  { label: "Last Week", key: "last-week", salesIdx: 5 },
+  { label: "March 2026", key: "mar-2026", salesIdx: 4 },
+  { label: "February 2026", key: "feb-2026", salesIdx: 3 },
+  { label: "January 2026", key: "jan-2026", salesIdx: 2 },
+];
+
 const ReportsPage = () => {
+  const navigate = useNavigate();
+  const [periodIndex, setPeriodIndex] = useState(0);
   const [period, setPeriod] = useState<"daily" | "weekly">("daily");
 
-  const topProducts = [...products].sort((a, b) => b.salesHistory[6] - a.salesHistory[6]).slice(0, 3);
-  const slowProducts = [...products].sort((a, b) => a.salesHistory[6] - b.salesHistory[6]).slice(0, 3);
-  const totalRevenue = products.reduce((s, p) => s + p.salesHistory[6] * p.sellingPrice, 0);
-  const totalCost = products.reduce((s, p) => s + p.salesHistory[6] * (p.costPrice / p.unitsPerBuyingUnit), 0);
+  const currentPeriod = periods[periodIndex];
+  const idx = currentPeriod.salesIdx;
+
+  const topProducts = [...products].sort((a, b) => b.salesHistory[idx] - a.salesHistory[idx]).slice(0, 3);
+  const slowProducts = [...products].sort((a, b) => a.salesHistory[idx] - b.salesHistory[idx]).slice(0, 3);
+  const totalRevenue = products.reduce((s, p) => s + p.salesHistory[idx] * p.sellingPrice, 0);
+  const totalCost = products.reduce((s, p) => s + p.salesHistory[idx] * (p.costPrice / p.unitsPerBuyingUnit), 0);
 
   return (
     <div className="app-shell dark bg-background">
       <div className="page-content px-4 pt-5">
         <h1 className="text-lg font-bold text-foreground mb-4">Reports</h1>
+
+        {/* Period navigation */}
+        <div className="flex items-center justify-between bg-card rounded-lg p-3 border border-border mb-4">
+          <button
+            onClick={() => setPeriodIndex((i) => Math.min(i + 1, periods.length - 1))}
+            disabled={periodIndex >= periods.length - 1}
+            className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center disabled:opacity-30"
+          >
+            <ChevronLeft className="w-4 h-4 text-foreground" />
+          </button>
+          <span className="text-sm font-semibold text-foreground">{currentPeriod.label}</span>
+          <button
+            onClick={() => setPeriodIndex((i) => Math.max(i - 1, 0))}
+            disabled={periodIndex <= 0}
+            className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center disabled:opacity-30"
+          >
+            <ChevronRight className="w-4 h-4 text-foreground" />
+          </button>
+        </div>
 
         {/* Toggle */}
         <div className="flex rounded-lg bg-muted p-1 mb-4">
@@ -44,16 +77,24 @@ const ReportsPage = () => {
           </p>
         </div>
 
-        {/* Revenue */}
+        {/* Revenue & Cost cards */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-card rounded-lg p-4 border border-border">
+          <button
+            onClick={() => navigate(`/owner/reports/revenue?period=${periodIndex}`)}
+            className="bg-card rounded-lg p-4 border border-border text-left active:opacity-80 transition-opacity"
+          >
             <p className="text-xs text-muted-foreground">Revenue</p>
             <p className="text-xl font-bold text-success">₦{totalRevenue.toLocaleString()}</p>
-          </div>
-          <div className="bg-card rounded-lg p-4 border border-border">
+            <p className="text-[10px] text-primary mt-1">Tap for breakdown →</p>
+          </button>
+          <button
+            onClick={() => navigate(`/owner/reports/cost?period=${periodIndex}`)}
+            className="bg-card rounded-lg p-4 border border-border text-left active:opacity-80 transition-opacity"
+          >
             <p className="text-xs text-muted-foreground">Cost</p>
             <p className="text-xl font-bold text-foreground">₦{Math.round(totalCost).toLocaleString()}</p>
-          </div>
+            <p className="text-[10px] text-primary mt-1">Tap for breakdown →</p>
+          </button>
         </div>
 
         {/* Top products */}
@@ -67,7 +108,7 @@ const ReportsPage = () => {
               </div>
               <div className="flex items-center gap-1">
                 <TrendingUp className="w-3 h-3 text-success" />
-                <span className="text-sm font-semibold text-foreground">{p.salesHistory[6]}</span>
+                <span className="text-sm font-semibold text-foreground">{p.salesHistory[idx]}</span>
               </div>
             </div>
           ))}
@@ -81,7 +122,7 @@ const ReportsPage = () => {
               <span className="text-sm text-foreground">{p.name.split("(")[0].trim()}</span>
               <div className="flex items-center gap-1">
                 <TrendingDown className="w-3 h-3 text-critical" />
-                <span className="text-sm font-semibold text-foreground">{p.salesHistory[6]}</span>
+                <span className="text-sm font-semibold text-foreground">{p.salesHistory[idx]}</span>
               </div>
             </div>
           ))}

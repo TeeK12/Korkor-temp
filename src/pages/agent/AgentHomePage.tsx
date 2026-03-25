@@ -1,18 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, TrendingUp, Flame } from "lucide-react";
+import { ShoppingCart, TrendingUp, Flame, Lock, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const AgentHomePage = () => {
   const navigate = useNavigate();
-  const { userName } = useAuth();
+  const { userName, isAuthorized, businessName } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const todaySales = 14;
   const dailyTarget = 25;
   const totalValue = 8750;
-  const topProduct = "Indomie Chicken";
   const progress = (todaySales / dailyTarget) * 100;
 
   const recentSales = [
@@ -27,10 +26,21 @@ const AgentHomePage = () => {
     <div className="app-shell bg-background">
       <div className="page-content px-4 pt-5">
         {/* Greeting */}
-        <div className="mb-6">
+        <div className="mb-4">
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-xl font-bold text-foreground">{userName || "Chidi"} 👋</h1>
         </div>
+
+        {/* Unauthorized banner */}
+        {!isAuthorized && (
+          <div className="bg-warning/10 border border-warning/30 rounded-2xl p-4 mb-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Your account is pending authorization</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Contact your business owner to get full access.</p>
+            </div>
+          </div>
+        )}
 
         {/* Target Progress */}
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-4">
@@ -46,9 +56,15 @@ const AgentHomePage = () => {
 
         {/* Quick Action */}
         <button
-          onClick={() => navigate("/agent/record-sale")}
-          className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 mb-4 shadow-lg shadow-primary/20"
+          onClick={() => isAuthorized && navigate("/agent/record-sale")}
+          disabled={!isAuthorized}
+          className={`w-full h-14 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 mb-4 shadow-lg ${
+            isAuthorized
+              ? "bg-primary text-primary-foreground shadow-primary/20"
+              : "bg-muted text-muted-foreground cursor-not-allowed"
+          }`}
         >
+          {!isAuthorized && <Lock className="w-4 h-4" />}
           <ShoppingCart className="w-5 h-5" />
           Record a Sale
         </button>

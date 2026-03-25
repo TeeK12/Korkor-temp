@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Auth pages
@@ -20,8 +20,11 @@ import AddProductPage from "./pages/owner/AddProductPage";
 import AgentsPage from "./pages/owner/AgentsPage";
 import AgentDetailPage from "./pages/owner/AgentDetailPage";
 import ReportsPage from "./pages/owner/ReportsPage";
+import RevenueBreakdownPage from "./pages/owner/RevenueBreakdownPage";
+import CostBreakdownPage from "./pages/owner/CostBreakdownPage";
 import RestockPage from "./pages/owner/RestockPage";
 import DistributorPage from "./pages/owner/DistributorPage";
+import DistributorProfilePage from "./pages/owner/DistributorProfilePage";
 import OwnerNotificationsPage from "./pages/owner/OwnerNotificationsPage";
 import OwnerSettingsPage from "./pages/owner/OwnerSettingsPage";
 
@@ -66,8 +69,11 @@ const App = () => (
             <Route path="/owner/agents" element={<AgentsPage />} />
             <Route path="/owner/agent/:id" element={<AgentDetailPage />} />
             <Route path="/owner/reports" element={<ReportsPage />} />
+            <Route path="/owner/reports/revenue" element={<RevenueBreakdownPage />} />
+            <Route path="/owner/reports/cost" element={<CostBreakdownPage />} />
             <Route path="/owner/restock" element={<RestockPage />} />
             <Route path="/owner/distributor" element={<DistributorPage />} />
+            <Route path="/owner/distributor/:id" element={<DistributorProfilePage />} />
             <Route path="/owner/notifications" element={<OwnerNotificationsPage />} />
             <Route path="/owner/settings" element={<OwnerSettingsPage />} />
             <Route path="/owner/feed" element={<FeedPage variant="owner" BottomNav={OwnerBottomNav} />} />

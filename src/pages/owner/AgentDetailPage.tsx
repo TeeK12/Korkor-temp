@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Mic, Eye, Play, Pause } from "lucide-react";
+import { ArrowLeft, Mic, Eye, Play, Pause, Shield, ShieldOff } from "lucide-react";
 import { agents } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AgentRec {
   id: string;
@@ -16,8 +17,10 @@ interface AgentRec {
 const AgentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { businessName } = useAuth();
   const agent = agents.find((a) => a.id === id);
   const [activeTab, setActiveTab] = useState<"activity" | "recommendations">("activity");
+  const [authorized, setAuthorized] = useState(true);
   const [recs, setRecs] = useState<AgentRec[]>([
     { id: "1", text: "Customers keep asking for Dano Cool Cow milk. We should stock it.", hasVoice: false, time: "Yesterday", seen: false, agentName: agent?.name || "Agent" },
     { id: "2", text: "The Dangote Sugar 500g is almost finished but many people are coming for it.", hasVoice: false, time: "2 days ago", seen: true, agentName: agent?.name || "Agent" },
@@ -37,6 +40,10 @@ const AgentDetailPage = () => {
     setRecs((prev) => prev.map((r) => r.id === recId ? { ...r, seen: true } : r));
   };
 
+  const toggleAuthorization = () => {
+    setAuthorized(!authorized);
+  };
+
   const perfData = [12, 18, 8, 22, 14, 16, agent.todaySales];
   const maxPerf = Math.max(...perfData);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -50,15 +57,33 @@ const AgentDetailPage = () => {
           <span className="text-sm">Back</span>
         </button>
 
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-lg font-bold text-primary">{agent.name[0]}</span>
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-lg font-bold text-foreground">{agent.name}</h1>
             <p className="text-sm text-muted-foreground">{agent.role} · {agent.lastActive}</p>
           </div>
         </div>
+
+        {/* Authorization toggle */}
+        <button
+          onClick={toggleAuthorization}
+          className={`w-full flex items-center justify-between p-3 rounded-lg border mb-4 ${
+            authorized ? "bg-success/10 border-success/30" : "bg-warning/10 border-warning/30"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {authorized ? <Shield className="w-4 h-4 text-success" /> : <ShieldOff className="w-4 h-4 text-warning" />}
+            <span className={`text-sm font-medium ${authorized ? "text-success" : "text-warning"}`}>
+              {authorized ? "Authorized" : "Pending Authorization"}
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {authorized ? "Tap to revoke" : "Tap to authorize"}
+          </span>
+        </button>
 
         {/* Tabs */}
         <div className="flex bg-muted rounded-lg p-1 mb-4">

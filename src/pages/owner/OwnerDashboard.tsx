@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap } from "lucide-react";
+import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/mockData";
+import { distributorFeedItems } from "@/data/distributors";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const OwnerDashboard = () => {
@@ -69,7 +70,7 @@ const OwnerDashboard = () => {
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-foreground mb-3">Top Moving Products</h2>
           <div className="grid grid-cols-3 gap-2">
-            {topMovers.map((p, i) => (
+            {topMovers.map((p) => (
               <div key={p.id} className="bg-card rounded-lg p-3 border border-border text-center">
                 <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-2">
                   <TrendingUp className="w-4 h-4 text-success" />
@@ -131,6 +132,42 @@ const OwnerDashboard = () => {
               <TrendingDown className="w-3 h-3 text-muted-foreground" />
               <span className="text-[10px] text-muted-foreground">steady</span>
             </div>
+          </div>
+        </div>
+
+        {/* Distributor Feed */}
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-foreground mb-3">Distributor Feed</h2>
+          <div className="space-y-3">
+            {distributorFeedItems.slice(0, 8).map((item) => (
+              <div key={item.id} className="bg-card rounded-lg p-4 border border-border">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Package className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                    <p className="text-lg font-bold text-foreground mt-0.5">₦{item.price.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{item.availableQty.toLocaleString()} available</p>
+                    <button
+                      onClick={() => navigate(`/owner/distributor/${item.distributorId}`)}
+                      className="text-xs text-primary font-medium mt-1"
+                    >
+                      {item.distributorName}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <button className="flex-1 py-2 rounded-lg border border-primary text-primary text-xs font-medium flex items-center justify-center gap-1">
+                    <ShoppingCart className="w-3 h-3" />
+                    Add to Cart
+                  </button>
+                  <button className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium">
+                    Checkout
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -9,15 +9,15 @@ const AgentSignupPage = () => {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    inviteCode: "",
     pin: "",
   });
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
   const handleSubmit = () => {
-    if (!form.name || !form.phone || !form.inviteCode || !form.pin) return;
-    loginAsAgent(form.name, "Mama Nkechi Provisions");
+    if (!form.name || !form.phone || !form.pin) return;
+    // New agents are unauthorized by default
+    loginAsAgent(form.name, "Mama Nkechi Provisions", false);
     navigate("/agent");
   };
 
@@ -30,7 +30,7 @@ const AgentSignupPage = () => {
         </button>
 
         <h1 className="text-2xl font-bold text-foreground mb-1">Join as an Agent</h1>
-        <p className="text-sm text-muted-foreground mb-8">Enter the invite code from your business owner to get started</p>
+        <p className="text-sm text-muted-foreground mb-8">Create your sub account to get started</p>
 
         <div className="space-y-4">
           <div>
@@ -55,17 +55,6 @@ const AgentSignupPage = () => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-foreground block mb-1.5">6-Digit Invite Code</label>
-            <input
-              placeholder="Enter invite code"
-              maxLength={6}
-              value={form.inviteCode}
-              onChange={(e) => update("inviteCode", e.target.value.replace(/\D/g, "").slice(0, 6))}
-              className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm tracking-[0.3em] text-center font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
             <label className="text-sm font-medium text-foreground block mb-1.5">Create 4-Digit PIN</label>
             <input
               type="password"
@@ -82,7 +71,7 @@ const AgentSignupPage = () => {
             onClick={handleSubmit}
             className="w-full h-12 mt-4 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
           >
-            Join Business
+            Create Sub Account
           </button>
         </div>
       </div>
