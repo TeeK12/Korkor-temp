@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { products } from "@/data/mockData";
+import { products, agents } from "@/data/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 interface CartItem {
@@ -14,6 +15,7 @@ interface CartItem {
 
 const RecordSalePage = () => {
   const navigate = useNavigate();
+  const { isAuthorized } = useAuth();
   const [tab, setTab] = useState<"search" | "camera">("search");
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -21,11 +23,24 @@ const RecordSalePage = () => {
   const [qty, setQty] = useState("1");
   const [showPreview, setShowPreview] = useState(false);
   const [note, setNote] = useState("");
+  const [collaborator, setCollaborator] = useState("");
+  const [collabQuery, setCollabQuery] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [cameraProduct, setCameraProduct] = useState<typeof products[0] | null>(null);
   const [cameraQty, setCameraQty] = useState(1);
   const [scanning, setScanning] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Mock unauthorized agents for collaborator suggestions
+  const unauthorizedAgents = [
+    { id: "u1", name: "Blessing Okoro" },
+    { id: "u2", name: "Emeka Uche" },
+    { id: "u3", name: "Funmi Adeyemi" },
+  ];
+
+  const collabSuggestions = collabQuery.length > 0
+    ? unauthorizedAgents.filter((a) => a.name.toLowerCase().includes(collabQuery.toLowerCase()))
+    : [];
 
   const filtered = query.length > 0
     ? products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
@@ -105,6 +120,9 @@ const RecordSalePage = () => {
           </div>
           <h2 className="text-xl font-bold text-foreground mb-1">Sale Recorded!</h2>
           <p className="text-sm text-muted-foreground">{cart.length} items · ₦{grandTotal.toLocaleString()}</p>
+          {collaborator && (
+            <p className="text-xs text-primary mt-1">Collaborator: {collaborator}</p>
+          )}
         </div>
       </div>
     );
@@ -144,8 +162,37 @@ const RecordSalePage = () => {
             placeholder="Add a note (optional)"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground mb-6"
+            className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground mb-3"
           />
+
+          {/* Collaborator field */}
+          <div className="relative mb-6">
+            <label className="text-xs text-muted-foreground mb-1 block">Collaborator (optional)</label>
+            <input
+              type="text"
+              placeholder="Tag another agent who helped with this sale"
+              value={collaborator || collabQuery}
+              onChange={(e) => {
+                setCollaborator("");
+                setCollabQuery(e.target.value);
+              }}
+              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+            />
+            {collabSuggestions.length > 0 && !collaborator && (
+              <div className="absolute top-full left-0 right-0 bg-card border border-border rounded-xl mt-1 overflow-hidden z-10">
+                {collabSuggestions.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => { setCollaborator(a.name); setCollabQuery(""); }}
+                    className="w-full px-4 py-3 text-sm text-foreground text-left hover:bg-muted/50 border-b border-border last:border-0"
+                  >
+                    {a.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-3">
             <button onClick={() => setShowPreview(false)} className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground">
               Edit

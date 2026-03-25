@@ -7,11 +7,13 @@ interface AuthState {
   role: UserRole;
   userName: string;
   businessName: string;
+  isAuthorized: boolean;
 }
 
 interface AuthContextType extends AuthState {
   loginAsOwner: (businessName: string, ownerName: string) => void;
-  loginAsAgent: (agentName: string, businessName: string) => void;
+  loginAsAgent: (agentName: string, businessName: string, authorized?: boolean) => void;
+  setAuthorized: (authorized: boolean) => void;
   logout: () => void;
 }
 
@@ -29,22 +31,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     role: null,
     userName: "",
     businessName: "",
+    isAuthorized: false,
   });
 
   const loginAsOwner = (businessName: string, ownerName: string) => {
-    setAuth({ isAuthenticated: true, role: "owner", userName: ownerName, businessName });
+    setAuth({ isAuthenticated: true, role: "owner", userName: ownerName, businessName, isAuthorized: true });
   };
 
-  const loginAsAgent = (agentName: string, businessName: string) => {
-    setAuth({ isAuthenticated: true, role: "agent", userName: agentName, businessName });
+  const loginAsAgent = (agentName: string, businessName: string, authorized = false) => {
+    setAuth({ isAuthenticated: true, role: "agent", userName: agentName, businessName, isAuthorized: authorized });
+  };
+
+  const setAuthorized = (authorized: boolean) => {
+    setAuth((prev) => ({ ...prev, isAuthorized: authorized }));
   };
 
   const logout = () => {
-    setAuth({ isAuthenticated: false, role: null, userName: "", businessName: "" });
+    setAuth({ isAuthenticated: false, role: null, userName: "", businessName: "", isAuthorized: false });
   };
 
   return (
-    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, logout }}>
+    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, setAuthorized, logout }}>
       {children}
     </AuthContext.Provider>
   );
