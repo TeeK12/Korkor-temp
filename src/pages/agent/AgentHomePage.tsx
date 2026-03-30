@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, TrendingUp, Flame, Lock, AlertTriangle } from "lucide-react";
+import { ShoppingCart, TrendingUp, Flame } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const AgentHomePage = () => {
   const navigate = useNavigate();
-  const { userName, isAuthorized, businessName } = useAuth();
+  const { userName, isAuthorized } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -31,17 +31,6 @@ const AgentHomePage = () => {
           <h1 className="text-xl font-bold text-foreground">{userName || "Chidi"} 👋</h1>
         </div>
 
-        {/* Unauthorized banner */}
-        {!isAuthorized && (
-          <div className="bg-warning/10 border border-warning/30 rounded-2xl p-4 mb-4 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Your account is pending authorization</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Contact your business owner to get full access.</p>
-            </div>
-          </div>
-        )}
-
         {/* Target Progress */}
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -54,20 +43,16 @@ const AgentHomePage = () => {
           <p className="text-xs text-muted-foreground mt-2">{dailyTarget - todaySales} more to hit your daily target</p>
         </div>
 
-        {/* Quick Action */}
-        <button
-          onClick={() => isAuthorized && navigate("/agent/record-sale")}
-          disabled={!isAuthorized}
-          className={`w-full h-14 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 mb-4 shadow-lg ${
-            isAuthorized
-              ? "bg-primary text-primary-foreground shadow-primary/20"
-              : "bg-muted text-muted-foreground cursor-not-allowed"
-          }`}
-        >
-          {!isAuthorized && <Lock className="w-4 h-4" />}
-          <ShoppingCart className="w-5 h-5" />
-          Record a Sale
-        </button>
+        {/* Quick Action — only for authorized agents */}
+        {isAuthorized && (
+          <button
+            onClick={() => navigate("/agent/record-sale")}
+            className="w-full h-14 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 mb-4 shadow-lg bg-primary text-primary-foreground shadow-primary/20"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            Record a Sale
+          </button>
+        )}
 
         {/* Today's Summary */}
         <div className="grid grid-cols-3 gap-2 mb-4">

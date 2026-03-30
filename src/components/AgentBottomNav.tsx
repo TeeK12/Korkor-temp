@@ -1,17 +1,21 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Home, ShoppingCart, TrendingUp, Newspaper, Settings } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AgentBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthorized } = useAuth();
 
-  const items = [
-    { icon: Home, label: "Home", path: "/agent" },
-    { icon: ShoppingCart, label: "Sales", path: "/agent/record-sale" },
-    { icon: TrendingUp, label: "My Stats", path: "/agent/performance" },
-    { icon: Newspaper, label: "Feed", path: "/agent/feed" },
-    { icon: Settings, label: "Settings", path: "/agent/settings" },
+  const allItems = [
+    { icon: Home, label: "Home", path: "/agent", alwaysShow: true },
+    { icon: ShoppingCart, label: "Sales", path: "/agent/record-sale", alwaysShow: false },
+    { icon: TrendingUp, label: "My Stats", path: "/agent/performance", alwaysShow: true },
+    { icon: Newspaper, label: "Feed", path: "/agent/feed", alwaysShow: true },
+    { icon: Settings, label: "Settings", path: "/agent/settings", alwaysShow: true },
   ];
+
+  const items = allItems.filter((item) => item.alwaysShow || isAuthorized);
 
   return (
     <nav className="absolute bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-border">
