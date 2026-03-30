@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserPlus, Copy, Check } from "lucide-react";
+import { KeyRound, Copy, Check, X } from "lucide-react";
 import { agents } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
@@ -10,12 +10,35 @@ const unreadRecs: Record<string, number> = { "1": 2, "2": 0 };
 
 const AgentsPage = () => {
   const navigate = useNavigate();
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [authCode, setAuthCode] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const generateCode = () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setAuthCode(code);
+    setCopied(false);
+    setShowCodeModal(true);
+  };
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(authCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="app-shell dark bg-background">
       <div className="page-content px-4 pt-5">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-lg font-bold text-foreground">Sub Accounts</h1>
+          <button
+            onClick={generateCode}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+            Generate Key
+          </button>
         </div>
 
         {/* Agent list */}
@@ -64,6 +87,37 @@ const AgentsPage = () => {
           <p className="text-xs text-muted-foreground mt-1">Upgrade to add more sub accounts</p>
         </div>
       </div>
+
+      {/* Auth Code Modal */}
+      {showCodeModal && (
+        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center px-6">
+          <div className="bg-card rounded-2xl p-6 border border-border w-full max-w-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-foreground">Authorization Key</h2>
+              <button onClick={() => setShowCodeModal(false)} className="text-muted-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">Share this code with your agent to authorize them</p>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {authCode.split("").map((digit, i) => (
+                <div key={i} className="w-10 h-12 rounded-lg bg-muted flex items-center justify-center">
+                  <span className="text-xl font-bold text-primary">{digit}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center mb-4">Expires in 24 hours</p>
+            <button
+              onClick={copyCode}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied!" : "Copy Code"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <OwnerBottomNav />
     </div>
   );

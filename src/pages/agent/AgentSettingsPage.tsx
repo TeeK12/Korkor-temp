@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, Lock, Building2, ChevronRight, LogOut, Send, Mic, Square, Play, Pause, Eye, EyeOff, X } from "lucide-react";
+import { ArrowLeft, User, Lock, Building2, ChevronRight, LogOut, Send, Mic, Square, Play, Pause, Eye, EyeOff, X, Swords, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
@@ -14,8 +14,8 @@ interface Rec {
 
 const AgentSettingsPage = () => {
   const navigate = useNavigate();
-  const { logout, userName, businessName } = useAuth();
-  const [activeSection, setActiveSection] = useState<"menu" | "linked">("menu");
+  const { logout, userName, businessName, isAuthorized, setAuthorized } = useAuth();
+  const [activeSection, setActiveSection] = useState<"menu" | "linked" | "challenge">("menu");
   const [recText, setRecText] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
@@ -27,6 +27,19 @@ const AgentSettingsPage = () => {
     { id: "2", text: "The Dangote Sugar 500g is almost finished but many people are coming for it.", hasVoice: false, time: "2 days ago", seen: true },
     { id: "3", text: "", hasVoice: true, time: "3 days ago", seen: false },
   ]);
+
+  // Auth code state
+  const [authCode, setAuthCode] = useState(["", "", "", "", "", ""]);
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState(false);
+  const codeRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Challenge state
+  const [challengeUser, setChallengeUser] = useState("");
+  const [challengeMetric, setChallengeMetric] = useState<"units" | "revenue">("units");
+  const [challengePeriod, setChallengePeriod] = useState<"today" | "week" | "month">("week");
+  const [challengeTarget, setChallengeTarget] = useState("");
+  const [challengeSent, setChallengeSent] = useState(false);
 
   const startRecording = () => {
     setRecording(true);
@@ -54,6 +67,206 @@ const AgentSettingsPage = () => {
   };
 
   const formatDuration = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+
+  const handleCodeChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newCode = [...authCode];
+    newCode[index] = value.slice(-1);
+    setAuthCode(newCode);
+    setAuthError("");
+    if (value && index < 5) {
+      codeRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !authCode[index] && index > 0) {
+      codeRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleAuthorize = () => {
+    const code = authCode.join("");
+    if (code.length < 6) {
+      setAuthError("Please enter the full 6-digit code");
+      return;
+    }
+    // Mock: accept any 6-digit code
+    setAuthSuccess(true);
+    setAuthorized(true);
+    setTimeout(() => {
+      setAuthSuccess(false);
+      setActiveSection("linked");
+    }, 2000);
+  };
+
+  const handleSendChallenge = () => {
+    if (!challengeUser.trim() || !challengeTarget) return;
+    setChallengeSent(true);
+    setTimeout(() => setChallengeSent(false), 3000);
+  };
+
+  // Auth code gate for linked business when unauthorized
+  if (activeSection === "linked" && !isAuthorized && !authSuccess) {
+    return (
+      <div className="app-shell bg-background">
+        <div className="page-content px-4 pt-4">
+          <button onClick={() => setActiveSection("menu")} className="flex items-center gap-1 text-muted-foreground mb-8">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+
+          <div className="flex flex-col items-center pt-12">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-6">
+              <Lock className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h1 className="text-xl font-bold text-foreground mb-2">Enter your authorization code</h1>
+            <p className="text-sm text-muted-foreground mb-8 text-center">Get this code from your business owner</p>
+
+            <div className="flex gap-2 mb-4">
+              {authCode.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { codeRefs.current[i] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleCodeChange(i, e.target.value)}
+                  onKeyDown={(e) => handleCodeKeyDown(i, e)}
+                  className="w-12 h-14 rounded-xl bg-card border border-border text-center text-xl font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              ))}
+            </div>
+
+            {authError && <p className="text-sm text-destructive mb-4">{authError}</p>}
+
+            <button
+              onClick={handleAuthorize}
+              className="w-full max-w-xs py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold"
+            >
+              Authorize
+            </button>
+          </div>
+        </div>
+        <AgentBottomNav />
+      </div>
+    );
+  }
+
+  // Auth success screen
+  if (authSuccess) {
+    return (
+      <div className="app-shell bg-background flex items-center justify-center">
+        <div className="text-center animate-scale-in">
+          <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-success" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-1">You are now authorized</h2>
+          <p className="text-sm text-muted-foreground">Welcome to {businessName || "your business"}.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Challenge a Friend
+  if (activeSection === "challenge") {
+    return (
+      <div className="app-shell bg-background">
+        <div className="page-content px-4 pt-4">
+          <button onClick={() => setActiveSection("menu")} className="flex items-center gap-1 text-muted-foreground mb-4">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+
+          <h1 className="text-xl font-bold text-foreground mb-1">Challenge a Friend</h1>
+          <p className="text-sm text-muted-foreground mb-6">Compete with another agent to hit a target</p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Who do you want to challenge?</label>
+              <input
+                type="text"
+                placeholder="Enter agent username"
+                value={challengeUser}
+                onChange={(e) => setChallengeUser(e.target.value)}
+                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Target metric</label>
+              <div className="flex bg-muted rounded-xl p-1">
+                <button
+                  onClick={() => setChallengeMetric("units")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    challengeMetric === "units" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  Units Sold
+                </button>
+                <button
+                  onClick={() => setChallengeMetric("revenue")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    challengeMetric === "revenue" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  Revenue
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Time period</label>
+              <div className="flex bg-muted rounded-xl p-1">
+                {(["today", "week", "month"] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setChallengePeriod(p)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
+                      challengePeriod === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Target {challengeMetric === "units" ? "units" : "amount (₦)"}
+              </label>
+              <input
+                type="number"
+                placeholder={challengeMetric === "units" ? "e.g. 50" : "e.g. 25000"}
+                value={challengeTarget}
+                onChange={(e) => setChallengeTarget(e.target.value)}
+                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+
+            <button
+              onClick={handleSendChallenge}
+              disabled={!challengeUser.trim() || !challengeTarget}
+              className="w-full py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Swords className="w-4 h-4" />
+              Send Challenge
+            </button>
+
+            {challengeSent && (
+              <div className="bg-success/10 border border-success/20 rounded-xl p-3 text-center animate-fade-in">
+                <p className="text-sm text-success font-medium">Challenge sent to {challengeUser}!</p>
+                <p className="text-xs text-muted-foreground mt-1">Waiting for them to accept</p>
+              </div>
+            )}
+          </div>
+        </div>
+        <AgentBottomNav />
+      </div>
+    );
+  }
 
   // Linked Business Page with Recommendations
   if (activeSection === "linked") {
@@ -91,7 +304,6 @@ const AgentSettingsPage = () => {
             <h2 className="text-base font-bold text-foreground mb-1">Send a Recommendation</h2>
             <p className="text-xs text-muted-foreground mb-4">Share what you're seeing on the ground with your business owner</p>
 
-            {/* Text input */}
             <textarea
               placeholder="Type your observation or suggestion…"
               value={recText}
@@ -100,7 +312,6 @@ const AgentSettingsPage = () => {
               className="w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 mb-3"
             />
 
-            {/* Voice recording */}
             <div className="mb-3">
               {!recording && !hasRecording && (
                 <button
@@ -121,7 +332,6 @@ const AgentSettingsPage = () => {
                 >
                   <div className="w-3 h-3 rounded-full bg-destructive animate-pulse" />
                   <span className="flex-1 text-left">Recording... {formatDuration(recordDuration)}</span>
-                  {/* Waveform animation */}
                   <div className="flex items-center gap-0.5">
                     {[3, 5, 2, 6, 4, 3, 5].map((h, i) => (
                       <div
@@ -151,7 +361,6 @@ const AgentSettingsPage = () => {
               )}
             </div>
 
-            {/* Send button */}
             <button
               onClick={handleSend}
               disabled={!recText.trim() && !hasRecording}
@@ -162,7 +371,6 @@ const AgentSettingsPage = () => {
             </button>
           </div>
 
-          {/* Recommendation history */}
           <h3 className="text-sm font-semibold text-foreground mb-3">Past Recommendations</h3>
           <div className="space-y-2">
             {recs.map((rec) => (
@@ -206,7 +414,6 @@ const AgentSettingsPage = () => {
       <div className="page-content px-4 pt-4">
         <h1 className="text-xl font-bold text-foreground mb-6">Settings</h1>
 
-        {/* Profile card */}
         <div className="bg-card rounded-2xl p-4 border border-border flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-lg font-bold text-primary">{(userName || "C")[0]}</span>
@@ -222,6 +429,7 @@ const AgentSettingsPage = () => {
             { icon: User, label: "Personal Profile", desc: "Name, phone number", action: undefined },
             { icon: Lock, label: "Change PIN", desc: "Update your 4-digit login PIN", action: undefined },
             { icon: Building2, label: "Linked Business", desc: businessName || "Mama Nkechi Provisions", action: () => setActiveSection("linked") },
+            { icon: Swords, label: "Challenge a Friend", desc: "Compete with another agent", action: () => setActiveSection("challenge") },
           ].map((item, i) => (
             <button
               key={i}
