@@ -1,18 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, TrendingUp, Flame } from "lucide-react";
+import { ShoppingCart, TrendingUp, Flame, Target, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const AgentHomePage = () => {
   const navigate = useNavigate();
-  const { userName, isAuthorized } = useAuth();
+  const { userName, isAuthorized, businessName, businessTarget, personalTarget } = useAuth();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const todaySales = 14;
   const dailyTarget = 25;
   const totalValue = 8750;
-  const progress = (todaySales / dailyTarget) * 100;
 
   const recentSales = [
     { time: "4:30 PM", product: "Indomie Chicken", qty: 5, value: 1000 },
@@ -21,6 +20,11 @@ const AgentHomePage = () => {
     { time: "11:45 AM", product: "Semovita 2kg", qty: 1, value: 1500 },
     { time: "10:00 AM", product: "Indomie Chicken", qty: 3, value: 600 },
   ];
+
+  const todaysTotal = recentSales.reduce((s, sale) => s + sale.value, 0);
+  const allTimeTotal = 247500; // Mock cumulative
+
+  const hasPersonalTarget = !!personalTarget;
 
   return (
     <div className="app-shell bg-background">
@@ -31,17 +35,61 @@ const AgentHomePage = () => {
           <h1 className="text-xl font-bold text-foreground">{userName || "Chidi"} 👋</h1>
         </div>
 
-        {/* Target Progress */}
-        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-foreground">Today's Target</span>
-            <span className="text-sm font-bold text-primary">{todaySales}/{dailyTarget}</span>
+        {/* Personal Target Progress — only if set */}
+        {hasPersonalTarget && (
+          <button
+            onClick={() => navigate("/agent/target-breakdown")}
+            className="w-full bg-primary/5 border border-primary/20 rounded-2xl p-5 mb-4 text-left"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">Your Target — {personalTarget.period}</span>
+              </div>
+              <span className="text-sm font-bold text-primary">
+                {personalTarget.progress}/{personalTarget.target}
+              </span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${Math.min(100, (personalTarget.progress / personalTarget.target) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {personalTarget.type === "sales"
+                ? `${Math.max(0, personalTarget.target - personalTarget.progress)} more sales to go`
+                : `₦${Math.max(0, personalTarget.target - personalTarget.progress).toLocaleString()} to go`}
+            </p>
+          </button>
+        )}
+
+        {/* Business-wide Target — if owner set one */}
+        {businessTarget && (
+          <div className="bg-accent/30 border border-primary/15 rounded-2xl p-4 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-secondary" />
+                <span className="text-sm font-medium text-foreground">{businessName || "Business"} Target</span>
+              </div>
+              <span className="text-sm font-bold text-secondary">
+                {businessTarget.metric === "revenue"
+                  ? `₦${businessTarget.progress.toLocaleString()}`
+                  : businessTarget.progress}
+                /
+                {businessTarget.metric === "revenue"
+                  ? `₦${businessTarget.target.toLocaleString()}`
+                  : businessTarget.target}
+              </span>
+            </div>
+            <div className="w-full h-3 rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-secondary transition-all"
+                style={{ width: `${Math.min(100, (businessTarget.progress / businessTarget.target) * 100)}%` }}
+              />
+            </div>
           </div>
-          <div className="w-full h-3 rounded-full bg-muted">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} />
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">{dailyTarget - todaySales} more to hit your daily target</p>
-        </div>
+        )}
 
         {/* Quick Action — only for authorized agents */}
         {isAuthorized && (
@@ -74,7 +122,7 @@ const AgentHomePage = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h2 className="text-sm font-semibold text-foreground mb-3">Recent Sales</h2>
           <div className="space-y-2">
             {recentSales.map((sale, i) => (
@@ -86,6 +134,18 @@ const AgentHomePage = () => {
                 <p className="text-sm font-bold text-success">₦{sale.value.toLocaleString()}</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Daily Total + All Time Total */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-card rounded-2xl p-4 border border-border text-center">
+            <p className="text-xs text-muted-foreground mb-1">Today's Total</p>
+            <p className="text-xl font-bold text-success">₦{todaysTotal.toLocaleString()}</p>
+          </div>
+          <div className="bg-card rounded-2xl p-4 border border-border text-center">
+            <p className="text-xs text-muted-foreground mb-1">All Time Total</p>
+            <p className="text-xl font-bold text-primary">₦{allTimeTotal.toLocaleString()}</p>
           </div>
         </div>
       </div>

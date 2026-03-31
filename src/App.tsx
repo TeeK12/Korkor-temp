@@ -35,6 +35,7 @@ import StockCountPage from "./pages/agent/StockCountPage";
 import PerformancePage from "./pages/agent/PerformancePage";
 import RecommendationsPage from "./pages/agent/RecommendationsPage";
 import AgentSettingsPage from "./pages/agent/AgentSettingsPage";
+import TargetBreakdownPage from "./pages/agent/TargetBreakdownPage";
 
 // Shared pages
 import FeedPage from "./pages/shared/FeedPage";
@@ -85,6 +86,7 @@ const App = () => (
             <Route path="/agent/performance" element={<PerformancePage />} />
             <Route path="/agent/recommendations" element={<RecommendationsPage />} />
             <Route path="/agent/settings" element={<AgentSettingsPage />} />
+            <Route path="/agent/target-breakdown" element={<TargetBreakdownPage />} />
             <Route path="/agent/feed" element={<FeedPage variant="agent" BottomNav={AgentBottomNav} />} />
 
             <Route path="*" element={<NotFound />} />
