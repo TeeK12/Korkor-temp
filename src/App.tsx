@@ -35,6 +35,7 @@ import StockCountPage from "./pages/agent/StockCountPage";
 import PerformancePage from "./pages/agent/PerformancePage";
 import RecommendationsPage from "./pages/agent/RecommendationsPage";
 import AgentSettingsPage from "./pages/agent/AgentSettingsPage";
+import TargetBreakdownPage from "./pages/agent/TargetBreakdownPage";
 
 // Shared pages
 import FeedPage from "./pages/shared/FeedPage";
