@@ -86,6 +86,7 @@ const App = () => (
             <Route path="/agent/performance" element={<PerformancePage />} />
             <Route path="/agent/recommendations" element={<RecommendationsPage />} />
             <Route path="/agent/settings" element={<AgentSettingsPage />} />
+            <Route path="/agent/target-breakdown" element={<TargetBreakdownPage />} />
             <Route path="/agent/feed" element={<FeedPage variant="agent" BottomNav={AgentBottomNav} />} />
 
             <Route path="*" element={<NotFound />} />
