@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, Lock, Shield, Target, Sparkles } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, Lock, Shield, Target, Sparkles, Loader2 } from "lucide-react";
 import { products } from "@/data/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const HealthBreakdownPage = () => {
   const navigate = useNavigate();
+  const { businessName, setBusinessTarget } = useAuth();
   const [activeTab, setActiveTab] = useState<"breakdown" | "target">("breakdown");
 
   // Target state
@@ -14,6 +16,7 @@ const HealthBreakdownPage = () => {
   const [targetAmount, setTargetAmount] = useState("");
   const [analysing, setAnalysing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const [targetConfirmed, setTargetConfirmed] = useState(false);
 
   // Assets
@@ -48,34 +51,39 @@ const HealthBreakdownPage = () => {
 
   const fmt = (n: number) => `₦${n.toLocaleString()}`;
 
+  const currentProgress = targetMetric === "revenue" ? weeklyRevenue : 87;
+
   const handleAnalyse = () => {
     if (!targetAmount) return;
     setAnalysing(true);
     setTimeout(() => {
       const target = parseInt(targetAmount);
-      const dailyNeeded = targetMetric === "revenue"
-        ? Math.ceil(target / 7)
-        : Math.ceil(target / 7);
+      const dailyNeeded = Math.ceil(target / 7);
       
       setAnalysis(
         targetMetric === "revenue"
-          ? `Based on your current weekly revenue of ${fmt(weeklyRevenue)}, a target of ${fmt(target)} is ${target <= weeklyRevenue * 1.3 ? "realistic" : "ambitious but achievable with effort"}.\n\n` +
-            `Daily target: ${fmt(dailyNeeded)} per day.\n\n` +
-            `Top products to push:\n• Indomie Chicken — high demand, good margins\n• Dangote Sugar — fast mover, low stock\n• Peak Milk — consistent seller\n\n` +
-            `Restock recommendation: Order more Dangote Sugar and Semovita before mid-week.\n\n` +
-            `Consider adjusting Indomie pricing slightly upward — current market supports it.`
-          : `A target of ${target} units is ${target <= 100 ? "realistic" : "ambitious"} based on your current weekly average of 87 units.\n\n` +
-            `Daily target: ${dailyNeeded} units per day.\n\n` +
-            `Focus areas:\n• Indomie Chicken has the highest velocity — assign agents to push it\n• Bundle Dangote Sugar with Peak Milk for combo deals\n• Ensure adequate stock levels before the week starts\n\n` +
-            `Agent tip: Brief your team on daily targets and incentivize hitting milestones.`
+          ? `Based on your current weekly revenue of ${fmt(weeklyRevenue)}, a target of ${fmt(target)} is ${target <= weeklyRevenue * 1.3 ? "realistic" : "ambitious but achievable with effort"}.\n\nDaily target: ${fmt(dailyNeeded)} per day.\n\nTop products to push:\n• Indomie Chicken — high demand, good margins\n• Dangote Sugar — fast mover, low stock\n• Peak Milk — consistent seller\n\nRestock recommendation: Order more Dangote Sugar and Semovita before mid-week.\n\nConsider adjusting Indomie pricing slightly upward — current market supports it.`
+          : `A target of ${target} units is ${target <= 100 ? "realistic" : "ambitious"} based on your current weekly average of 87 units.\n\nDaily target: ${dailyNeeded} units per day.\n\nFocus areas:\n• Indomie Chicken has the highest velocity — assign agents to push it\n• Bundle Dangote Sugar with Peak Milk for combo deals\n• Ensure adequate stock levels before the week starts\n\nAgent tip: Brief your team on daily targets and incentivize hitting milestones.`
       );
       setAnalysing(false);
     }, 2000);
   };
 
   const handleConfirmTarget = () => {
-    setTargetConfirmed(true);
-    setTimeout(() => setTargetConfirmed(false), 3000);
+    if (!targetAmount) return;
+    setConfirming(true);
+    setTimeout(() => {
+      const target = parseInt(targetAmount);
+      const periodLabel = targetPeriod === "week" ? "This Week" : targetPeriod === "month" ? "This Month" : "Custom";
+      setBusinessTarget({
+        metric: targetMetric,
+        target,
+        period: periodLabel,
+        progress: currentProgress,
+      });
+      setConfirming(false);
+      setTargetConfirmed(true);
+    }, 1500);
   };
 
   return (
@@ -128,18 +136,23 @@ const HealthBreakdownPage = () => {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Target className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">Active Target</span>
+                    <span className="text-sm font-medium text-foreground">Target Progress</span>
                   </div>
                   <span className="text-sm font-bold text-primary">
-                    {targetMetric === "revenue" ? fmt(weeklyRevenue) : "87"} / {targetMetric === "revenue" ? fmt(parseInt(targetAmount)) : targetAmount}
+                    {targetMetric === "revenue" ? fmt(currentProgress) : currentProgress} / {targetMetric === "revenue" ? fmt(parseInt(targetAmount)) : targetAmount}
                   </span>
                 </div>
                 <div className="w-full h-3 rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${Math.min(100, (targetMetric === "revenue" ? weeklyRevenue / parseInt(targetAmount) : 87 / parseInt(targetAmount)) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (currentProgress / parseInt(targetAmount)) * 100)}%` }}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {targetMetric === "revenue"
+                    ? `${fmt(Math.max(0, parseInt(targetAmount) - currentProgress))} remaining`
+                    : `${Math.max(0, parseInt(targetAmount) - currentProgress)} units remaining`}
+                </p>
               </div>
             )}
 
@@ -277,7 +290,7 @@ const HealthBreakdownPage = () => {
                 type="number"
                 placeholder={targetMetric === "revenue" ? "e.g. 100000" : "e.g. 200"}
                 value={targetAmount}
-                onChange={(e) => { setTargetAmount(e.target.value); setAnalysis(null); }}
+                onChange={(e) => { setTargetAmount(e.target.value); setAnalysis(null); setTargetConfirmed(false); }}
                 className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
@@ -301,13 +314,23 @@ const HealthBreakdownPage = () => {
               </div>
             )}
 
-            {analysis && (
+            {analysis && !targetConfirmed && (
               <button
                 onClick={handleConfirmTarget}
-                className="w-full py-3 rounded-xl bg-success text-primary-foreground text-sm font-bold flex items-center justify-center gap-2"
+                disabled={confirming}
+                className="w-full py-3 rounded-xl bg-success text-primary-foreground text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-70"
               >
-                <Target className="w-4 h-4" />
-                Confirm Target
+                {confirming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Confirming...
+                  </>
+                ) : (
+                  <>
+                    <Target className="w-4 h-4" />
+                    Confirm Target
+                  </>
+                )}
               </button>
             )}
 

@@ -2,18 +2,36 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 
 type UserRole = "owner" | "agent" | null;
 
+interface BusinessTarget {
+  metric: "revenue" | "units";
+  target: number;
+  period: string;
+  progress: number;
+}
+
+interface PersonalTarget {
+  type: "sales" | "revenue";
+  target: number;
+  period: string;
+  progress: number;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
   role: UserRole;
   userName: string;
   businessName: string;
   isAuthorized: boolean;
+  businessTarget: BusinessTarget | null;
+  personalTarget: PersonalTarget | null;
 }
 
 interface AuthContextType extends AuthState {
   loginAsOwner: (businessName: string, ownerName: string) => void;
   loginAsAgent: (agentName: string, businessName: string, authorized?: boolean) => void;
   setAuthorized: (authorized: boolean) => void;
+  setBusinessTarget: (target: BusinessTarget | null) => void;
+  setPersonalTarget: (target: PersonalTarget | null) => void;
   logout: () => void;
 }
 
@@ -32,26 +50,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     userName: "",
     businessName: "",
     isAuthorized: false,
+    businessTarget: null,
+    personalTarget: null,
   });
 
   const loginAsOwner = (businessName: string, ownerName: string) => {
-    setAuth({ isAuthenticated: true, role: "owner", userName: ownerName, businessName, isAuthorized: true });
+    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "owner", userName: ownerName, businessName, isAuthorized: true }));
   };
 
   const loginAsAgent = (agentName: string, businessName: string, authorized = false) => {
-    setAuth({ isAuthenticated: true, role: "agent", userName: agentName, businessName, isAuthorized: authorized });
+    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "agent", userName: agentName, businessName, isAuthorized: authorized }));
   };
 
   const setAuthorized = (authorized: boolean) => {
     setAuth((prev) => ({ ...prev, isAuthorized: authorized }));
   };
 
+  const setBusinessTarget = (target: BusinessTarget | null) => {
+    setAuth((prev) => ({ ...prev, businessTarget: target }));
+  };
+
+  const setPersonalTarget = (target: PersonalTarget | null) => {
+    setAuth((prev) => ({ ...prev, personalTarget: target }));
+  };
+
   const logout = () => {
-    setAuth({ isAuthenticated: false, role: null, userName: "", businessName: "", isAuthorized: false });
+    setAuth({ isAuthenticated: false, role: null, userName: "", businessName: "", isAuthorized: false, businessTarget: null, personalTarget: null });
   };
 
   return (
-    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, setAuthorized, logout }}>
+    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, setAuthorized, setBusinessTarget, setPersonalTarget, logout }}>
       {children}
     </AuthContext.Provider>
   );

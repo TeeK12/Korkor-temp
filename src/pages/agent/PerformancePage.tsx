@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Flame, TrendingUp, Star, Zap, Target, Swords } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const PerformancePage = () => {
+  const { setPersonalTarget } = useAuth();
   const weeklyTotal = 87;
   const bestDay = "Thursday";
   const topProduct = "Indomie Chicken";
@@ -13,12 +15,12 @@ const PerformancePage = () => {
   const maxMonthly = Math.max(...monthlyData);
   const months = ["Week 1", "Week 2", "Week 3", "Week 4"];
 
-  // Goal state
-  const [showGoalForm, setShowGoalForm] = useState(false);
-  const [goalType, setGoalType] = useState<"sales" | "revenue">("sales");
-  const [goalPeriod, setGoalPeriod] = useState<"today" | "week" | "month">("week");
-  const [goalTarget, setGoalTarget] = useState("");
-  const [activeGoal, setActiveGoal] = useState<{ type: string; target: number; period: string; progress: number } | null>(null);
+  // Target state
+  const [showTargetForm, setShowTargetForm] = useState(false);
+  const [targetType, setTargetType] = useState<"sales" | "revenue">("sales");
+  const [targetPeriod, setTargetPeriod] = useState<"today" | "week" | "month">("week");
+  const [targetValue, setTargetValue] = useState("");
+  const [activeTarget, setActiveTarget] = useState<{ type: string; target: number; period: string; progress: number } | null>(null);
 
   // Mock challenge
   const [activeChallenge] = useState<{
@@ -37,16 +39,25 @@ const PerformancePage = () => {
     theirProgress: 28,
   });
 
-  const handleSetGoal = () => {
-    if (!goalTarget) return;
-    setActiveGoal({
-      type: goalType,
-      target: parseInt(goalTarget),
-      period: goalPeriod === "today" ? "Today" : goalPeriod === "week" ? "This Week" : "This Month",
-      progress: goalType === "sales" ? weeklyTotal : 8750,
+  const handleSetTarget = () => {
+    if (!targetValue) return;
+    const parsedTarget = parseInt(targetValue);
+    const periodLabel = targetPeriod === "today" ? "Today" : targetPeriod === "week" ? "This Week" : "This Month";
+    const currentProgress = targetType === "sales" ? weeklyTotal : 8750;
+    setActiveTarget({
+      type: targetType,
+      target: parsedTarget,
+      period: periodLabel,
+      progress: currentProgress,
     });
-    setShowGoalForm(false);
-    setGoalTarget("");
+    setPersonalTarget({
+      type: targetType,
+      target: parsedTarget,
+      period: periodLabel,
+      progress: currentProgress,
+    });
+    setShowTargetForm(false);
+    setTargetValue("");
   };
 
   return (
@@ -55,31 +66,31 @@ const PerformancePage = () => {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-bold text-foreground">My Performance</h1>
           <button
-            onClick={() => setShowGoalForm(!showGoalForm)}
+            onClick={() => setShowTargetForm(!showTargetForm)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
           >
             <Target className="w-3.5 h-3.5" />
-            Set Goal
+            Set Target
           </button>
         </div>
 
-        {/* Goal form */}
-        {showGoalForm && (
+        {/* Target form */}
+        {showTargetForm && (
           <div className="bg-card rounded-2xl p-4 border border-border mb-4 animate-fade-in">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Set Personal Goal</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">Set Personal Target</h3>
             <div className="flex bg-muted rounded-xl p-1 mb-3">
               <button
-                onClick={() => setGoalType("sales")}
+                onClick={() => setTargetType("sales")}
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  goalType === "sales" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  targetType === "sales" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 Sales Count
               </button>
               <button
-                onClick={() => setGoalType("revenue")}
+                onClick={() => setTargetType("revenue")}
                 className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  goalType === "revenue" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  targetType === "revenue" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 }`}
               >
                 Revenue
@@ -89,9 +100,9 @@ const PerformancePage = () => {
               {(["today", "week", "month"] as const).map((p) => (
                 <button
                   key={p}
-                  onClick={() => setGoalPeriod(p)}
+                  onClick={() => setTargetPeriod(p)}
                   className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    goalPeriod === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                    targetPeriod === p ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                   }`}
                 >
                   {p === "today" ? "Today" : p === "week" ? "This Week" : "This Month"}
@@ -100,43 +111,43 @@ const PerformancePage = () => {
             </div>
             <input
               type="number"
-              placeholder={goalType === "sales" ? "Target number of sales" : "Target revenue (₦)"}
-              value={goalTarget}
-              onChange={(e) => setGoalTarget(e.target.value)}
+              placeholder={targetType === "sales" ? "Target number of sales" : "Target revenue (₦)"}
+              value={targetValue}
+              onChange={(e) => setTargetValue(e.target.value)}
               className="w-full bg-muted rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground mb-3"
             />
             <button
-              onClick={handleSetGoal}
-              disabled={!goalTarget}
+              onClick={handleSetTarget}
+              disabled={!targetValue}
               className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
             >
-              Confirm Goal
+              Confirm Target
             </button>
           </div>
         )}
 
-        {/* Active goal progress */}
-        {activeGoal && (
+        {/* Active target progress */}
+        {activeTarget && (
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-foreground">My Goal — {activeGoal.period}</span>
+                <span className="text-sm font-medium text-foreground">My Target — {activeTarget.period}</span>
               </div>
               <span className="text-sm font-bold text-primary">
-                {activeGoal.progress}/{activeGoal.target}
+                {activeTarget.progress}/{activeTarget.target}
               </span>
             </div>
             <div className="w-full h-3 rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${Math.min(100, (activeGoal.progress / activeGoal.target) * 100)}%` }}
+                style={{ width: `${Math.min(100, (activeTarget.progress / activeTarget.target) * 100)}%` }}
               />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {activeGoal.type === "sales"
-                ? `${Math.max(0, activeGoal.target - activeGoal.progress)} more sales to go`
-                : `₦${Math.max(0, activeGoal.target - activeGoal.progress).toLocaleString()} to go`}
+              {activeTarget.type === "sales"
+                ? `${Math.max(0, activeTarget.target - activeTarget.progress)} more sales to go`
+                : `₦${Math.max(0, activeTarget.target - activeTarget.progress).toLocaleString()} to go`}
             </p>
           </div>
         )}
@@ -152,7 +163,6 @@ const PerformancePage = () => {
             <p className="text-xs text-muted-foreground mb-3">
               Target: {activeChallenge.target} {activeChallenge.metric} · vs {activeChallenge.challenger}
             </p>
-            {/* Dual progress bars */}
             <div className="space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
