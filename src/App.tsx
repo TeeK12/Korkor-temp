@@ -22,6 +22,7 @@ import AgentDetailPage from "./pages/owner/AgentDetailPage";
 import ReportsPage from "./pages/owner/ReportsPage";
 import RevenueBreakdownPage from "./pages/owner/RevenueBreakdownPage";
 import CostBreakdownPage from "./pages/owner/CostBreakdownPage";
+import NetProfitBreakdownPage from "./pages/owner/NetProfitBreakdownPage";
 import RestockPage from "./pages/owner/RestockPage";
 import DistributorPage from "./pages/owner/DistributorPage";
 import DistributorProfilePage from "./pages/owner/DistributorProfilePage";
