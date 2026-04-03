@@ -27,7 +27,9 @@ const ProductDetailPage = () => {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const totalUnitsSold = product.salesHistory.reduce((s, v) => s + v, 0);
-  const currentRevenue = totalUnitsSold * sellingPrice;
+  // Current Revenue is historical — locked to original selling price at time of sale
+  const currentRevenue = totalUnitsSold * product.sellingPrice;
+  // Total Revenue is a projection — uses current (possibly edited) selling price × remaining stock
   const totalRevenue = product.currentStock * sellingPrice;
 
   const handleSaveEdit = () => {

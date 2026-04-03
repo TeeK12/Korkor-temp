@@ -376,14 +376,21 @@ const AddProductPage = () => {
             </div>
           )}
 
-          {/* Projected Revenue */}
+          {/* Stock */}
+          <div className="border-t border-border pt-4 mt-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Stock</p>
+          </div>
+
+          <TextField label="Opening Stock Quantity" placeholder="Current quantity" value={form.openingStock} onChange={(v) => update("openingStock", v)} type="number" />
+
+          {/* Projected Revenue — below stock, above save */}
           {(() => {
             const openStock = parseFloat(form.openingStock) || 0;
             const idealRev = openStock * calc.idealPrice;
             const yourRev = openStock * (parseFloat(form.actualSellingPrice) || 0);
             if (openStock > 0 && calc.idealPrice > 0) {
               return (
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-success/5 border border-success/20 rounded-lg p-4">
                     <p className="text-xs text-muted-foreground mb-1">Projected Revenue at Ideal Price</p>
                     <p className="text-lg font-bold text-success">{fmt(idealRev)}</p>
@@ -399,13 +406,6 @@ const AddProductPage = () => {
             }
             return null;
           })()}
-
-          {/* Stock */}
-          <div className="border-t border-border pt-4 mt-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Stock</p>
-          </div>
-
-          <TextField label="Opening Stock Quantity" placeholder="Current quantity" value={form.openingStock} onChange={(v) => update("openingStock", v)} type="number" />
 
           <button onClick={saveProduct} className="w-full h-12 mt-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm">
             Save Product
