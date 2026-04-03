@@ -22,6 +22,7 @@ import AgentDetailPage from "./pages/owner/AgentDetailPage";
 import ReportsPage from "./pages/owner/ReportsPage";
 import RevenueBreakdownPage from "./pages/owner/RevenueBreakdownPage";
 import CostBreakdownPage from "./pages/owner/CostBreakdownPage";
+import NetProfitBreakdownPage from "./pages/owner/NetProfitBreakdownPage";
 import RestockPage from "./pages/owner/RestockPage";
 import DistributorPage from "./pages/owner/DistributorPage";
 import DistributorProfilePage from "./pages/owner/DistributorProfilePage";
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/owner/reports" element={<ReportsPage />} />
             <Route path="/owner/reports/revenue" element={<RevenueBreakdownPage />} />
             <Route path="/owner/reports/cost" element={<CostBreakdownPage />} />
+            <Route path="/owner/reports/profit" element={<NetProfitBreakdownPage />} />
             <Route path="/owner/restock" element={<RestockPage />} />
             <Route path="/owner/distributor" element={<DistributorPage />} />
             <Route path="/owner/distributor/:id" element={<DistributorProfilePage />} />

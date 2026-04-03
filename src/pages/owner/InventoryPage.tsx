@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Package } from "lucide-react";
+import { Search, Plus, Package, TrendingUp } from "lucide-react";
 import { products } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
@@ -11,17 +11,58 @@ const statusColors: Record<string, string> = {
   dead: "bg-muted text-muted-foreground",
 };
 
+type FilterType = "all" | "healthy" | "low" | "dead" | "top-selling" | "trending";
+
 const InventoryPage = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "low" | "dead" | "healthy">("all");
+  const [filter, setFilter] = useState<FilterType>("all");
 
-  const filtered = products.filter((p) => {
-    const matchQuery = p.name.toLowerCase().includes(query.toLowerCase());
-    if (filter === "all") return matchQuery;
-    if (filter === "low") return matchQuery && (p.status === "low" || p.status === "critical");
-    return matchQuery && p.status === filter;
-  });
+  const filtered = useMemo(() => {
+    let list = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+
+    if (filter === "low") {
+      list = list.filter((p) => p.status === "low" || p.status === "critical");
+    } else if (filter === "healthy" || filter === "dead") {
+      list = list.filter((p) => p.status === filter);
+    } else if (filter === "top-selling") {
+      list = [...list].sort((a, b) => {
+        const aSold = a.salesHistory.reduce((s, v) => s + v, 0);
+        const bSold = b.salesHistory.reduce((s, v) => s + v, 0);
+        return bSold - aSold;
+      });
+    } else if (filter === "trending") {
+      list = list
+        .map((p) => {
+          const recent = p.salesHistory.slice(-3).reduce((s, v) => s + v, 0);
+          const prev = p.salesHistory.slice(0, 4).reduce((s, v) => s + v, 0);
+          const pctChange = prev > 0 ? Math.round(((recent - prev) / prev) * 100) : recent > 0 ? 100 : 0;
+          return { ...p, pctChange };
+        })
+        .filter((p) => p.pctChange > 0)
+        .sort((a, b) => b.pctChange - a.pctChange);
+    }
+
+    return list;
+  }, [query, filter]);
+
+  const getTotalUnitsSold = (p: typeof products[0]) =>
+    p.salesHistory.reduce((s, v) => s + v, 0);
+
+  const getTrendPct = (p: typeof products[0]) => {
+    const recent = p.salesHistory.slice(-3).reduce((s, v) => s + v, 0);
+    const prev = p.salesHistory.slice(0, 4).reduce((s, v) => s + v, 0);
+    return prev > 0 ? Math.round(((recent - prev) / prev) * 100) : recent > 0 ? 100 : 0;
+  };
+
+  const filters: { key: FilterType; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "healthy", label: "Healthy" },
+    { key: "low", label: "Low Stock" },
+    { key: "dead", label: "Dead Stock" },
+    { key: "top-selling", label: "Top Selling" },
+    { key: "trending", label: "Trending" },
+  ];
 
   return (
     <div className="app-shell dark bg-background">
@@ -40,16 +81,16 @@ const InventoryPage = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-4 overflow-x-auto">
-          {(["all", "healthy", "low", "dead"] as const).map((f) => (
+        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+          {filters.map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                filter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                filter === f.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               }`}
             >
-              {f === "all" ? "All" : f === "low" ? "Low Stock" : f === "dead" ? "Dead Stock" : "Healthy"}
+              {f.label}
             </button>
           ))}
         </div>
@@ -70,10 +111,29 @@ const InventoryPage = () => {
                 <p className="text-xs text-muted-foreground">{p.category}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold text-foreground">{p.currentStock}</p>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[p.status]}`}>
-                  {p.status}
-                </span>
+                {filter === "top-selling" ? (
+                  <>
+                    <p className="text-sm font-bold text-foreground">{getTotalUnitsSold(p)} sold</p>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/15 text-primary">
+                      Top Seller
+                    </span>
+                  </>
+                ) : filter === "trending" ? (
+                  <>
+                    <div className="flex items-center gap-1 justify-end">
+                      <TrendingUp className="w-3 h-3 text-success" />
+                      <p className="text-sm font-bold text-success">+{getTrendPct(p)}%</p>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">this week</span>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-foreground">{p.currentStock}</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[p.status]}`}>
+                      {p.status}
+                    </span>
+                  </>
+                )}
               </div>
             </button>
           ))}

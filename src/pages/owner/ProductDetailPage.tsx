@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Edit, TrendingUp } from "lucide-react";
 import { products } from "@/data/mockData";
@@ -7,6 +8,12 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const product = products.find((p) => p.id === id);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  // Editable state
+  const [editing, setEditing] = useState(false);
+  const [sellingPrice, setSellingPrice] = useState(product?.sellingPrice ?? 0);
+  const [costPrice, setCostPrice] = useState(product?.costPrice ?? 0);
 
   if (!product) {
     return (
@@ -19,6 +26,15 @@ const ProductDetailPage = () => {
   const maxSale = Math.max(...product.salesHistory);
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  const totalUnitsSold = product.salesHistory.reduce((s, v) => s + v, 0);
+  const currentRevenue = totalUnitsSold * sellingPrice;
+  const totalRevenue = product.currentStock * sellingPrice;
+
+  const handleSaveEdit = () => {
+    setEditing(false);
+    setLastUpdated(new Date().toLocaleString());
+  };
+
   return (
     <div className="app-shell dark bg-background">
       <div className="page-content px-4 pt-4">
@@ -28,13 +44,23 @@ const ProductDetailPage = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
           </button>
-          <button onClick={() => navigate(`/owner/product/edit/${product.id}`)} className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-            <Edit className="w-4 h-4 text-foreground" />
-          </button>
+          {editing ? (
+            <button onClick={handleSaveEdit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
+              Save
+            </button>
+          ) : (
+            <button onClick={() => setEditing(true)} className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+              <Edit className="w-4 h-4 text-foreground" />
+            </button>
+          )}
         </div>
 
         <h1 className="text-xl font-bold text-foreground mb-1">{product.name}</h1>
-        <p className="text-sm text-muted-foreground mb-6">{product.category}</p>
+        <p className="text-sm text-muted-foreground mb-1">{product.category}</p>
+        {lastUpdated && (
+          <p className="text-[10px] text-muted-foreground mb-4">Last updated: {lastUpdated}</p>
+        )}
+        {!lastUpdated && <div className="mb-6" />}
 
         {/* Stock Level */}
         <div className="bg-card rounded-lg p-5 border border-border mb-4 text-center">
@@ -48,12 +74,36 @@ const ProductDetailPage = () => {
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-xs text-muted-foreground">Buying Unit</p>
             <p className="text-sm font-semibold text-foreground">{product.buyingUnit}</p>
-            <p className="text-xs text-muted-foreground mt-1">₦{product.costPrice.toLocaleString()}</p>
+            {editing ? (
+              <div className="mt-1 relative">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₦</span>
+                <input
+                  type="number"
+                  value={costPrice}
+                  onChange={(e) => setCostPrice(Number(e.target.value))}
+                  className="w-full h-8 pl-6 pr-2 rounded border border-input bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">₦{costPrice.toLocaleString()}</p>
+            )}
           </div>
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-xs text-muted-foreground">Selling Unit</p>
             <p className="text-sm font-semibold text-foreground">{product.sellingUnit}</p>
-            <p className="text-xs text-muted-foreground mt-1">₦{product.sellingPrice.toLocaleString()}</p>
+            {editing ? (
+              <div className="mt-1 relative">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₦</span>
+                <input
+                  type="number"
+                  value={sellingPrice}
+                  onChange={(e) => setSellingPrice(Number(e.target.value))}
+                  className="w-full h-8 pl-6 pr-2 rounded border border-input bg-background text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">₦{sellingPrice.toLocaleString()}</p>
+            )}
           </div>
         </div>
 
@@ -61,13 +111,24 @@ const ProductDetailPage = () => {
           <p className="text-xs text-muted-foreground">1 {product.buyingUnit} = {product.unitsPerBuyingUnit} {product.sellingUnit}s</p>
         </div>
 
-        {/* Revenue */}
-        <div className="bg-success/5 border border-success/20 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-success" />
-            <span className="text-xs text-muted-foreground">Total Revenue</span>
+        {/* Revenue — two cards */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-success/5 border border-success/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-success" />
+              <span className="text-xs text-muted-foreground">Current Revenue</span>
+            </div>
+            <p className="text-xl font-bold text-success">₦{currentRevenue.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">From sales recorded</p>
           </div>
-          <p className="text-2xl font-bold text-success mt-1">₦{product.totalRevenue.toLocaleString()}</p>
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-4 h-4 text-primary" />
+              <span className="text-xs text-muted-foreground">Total Revenue</span>
+            </div>
+            <p className="text-xl font-bold text-primary">₦{totalRevenue.toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">If fully sold</p>
+          </div>
         </div>
 
         {/* Sales Chart */}

@@ -24,6 +24,7 @@ const ReportsPage = () => {
   const slowProducts = [...products].sort((a, b) => a.salesHistory[idx] - b.salesHistory[idx]).slice(0, 3);
   const totalRevenue = products.reduce((s, p) => s + p.salesHistory[idx] * p.sellingPrice, 0);
   const totalCost = products.reduce((s, p) => s + p.salesHistory[idx] * (p.costPrice / p.unitsPerBuyingUnit), 0);
+  const netProfit = totalRevenue - totalCost;
 
   return (
     <div className="app-shell dark bg-background">
@@ -78,7 +79,7 @@ const ReportsPage = () => {
         </div>
 
         {/* Revenue & Cost cards */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <button
             onClick={() => navigate(`/owner/reports/revenue?period=${periodIndex}`)}
             className="bg-card rounded-lg p-4 border border-border text-left active:opacity-80 transition-opacity"
@@ -96,6 +97,22 @@ const ReportsPage = () => {
             <p className="text-[10px] text-primary mt-1">Tap for breakdown →</p>
           </button>
         </div>
+
+        {/* Net Profit card */}
+        <button
+          onClick={() => navigate(`/owner/reports/profit?period=${periodIndex}`)}
+          className="w-full bg-card rounded-lg p-4 border border-border text-left active:opacity-80 transition-opacity mb-4"
+        >
+          <p className="text-xs text-muted-foreground">Net Profit</p>
+          <p className={`text-xl font-bold ${netProfit >= 0 ? "text-success" : "text-critical"}`}>
+            ₦{Math.abs(Math.round(netProfit)).toLocaleString()}
+            {netProfit < 0 && " (loss)"}
+          </p>
+          <p className={`text-[10px] mt-1 ${netProfit >= 0 ? "text-success" : "text-critical"}`}>
+            {netProfit >= 0 ? "You are in profit" : "You are currently at a loss"}
+          </p>
+          <p className="text-[10px] text-primary mt-0.5">Tap for breakdown →</p>
+        </button>
 
         {/* Top products */}
         <div className="bg-card rounded-lg p-4 border border-border mb-4">
