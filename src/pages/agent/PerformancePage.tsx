@@ -5,7 +5,8 @@ import { useExpenses } from "@/contexts/ExpensesContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const PerformancePage = () => {
-  const { setPersonalTarget } = useAuth();
+  const { setPersonalTarget, userName } = useAuth();
+  const { getAgentExpenses } = useExpenses();
   const weeklyTotal = 87;
   const bestDay = "Thursday";
   const topProduct = "Indomie Chicken";
