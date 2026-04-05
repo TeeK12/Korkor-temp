@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart } from "lucide-react";
+import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/mockData";
 import { distributorFeedItems } from "@/data/distributors";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const { businessName } = useAuth();
+  const { getTodaysExpenses } = useExpenses();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -16,6 +18,8 @@ const OwnerDashboard = () => {
   const restockItems = products.filter((p) => p.status === "low" || p.status === "critical");
   const todayRevenue = products.reduce((s, p) => s + p.salesHistory[6] * p.sellingPrice, 0);
   const todayCost = products.reduce((s, p) => s + p.salesHistory[6] * (p.costPrice / p.unitsPerBuyingUnit), 0);
+  const todaysExpenses = getTodaysExpenses();
+  const todaysExpenseTotal = todaysExpenses.reduce((s, e) => s + e.amount, 0);
 
   return (
     <div className="app-shell dark bg-background">
@@ -115,8 +119,8 @@ const OwnerDashboard = () => {
           </span>
         </button>
 
-        {/* Revenue Snapshot */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Revenue / Cost / Expenses Snapshot */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-xs text-muted-foreground mb-1">Today's Revenue</p>
             <p className="text-xl font-bold text-success">₦{todayRevenue.toLocaleString()}</p>
@@ -134,6 +138,23 @@ const OwnerDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Today's Expenses */}
+        <button
+          onClick={() => navigate("/owner/expenses")}
+          className="w-full bg-card rounded-lg p-4 mb-6 border border-border flex items-center justify-between active:opacity-80 transition-opacity"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-critical/10 flex items-center justify-center">
+              <Receipt className="w-5 h-5 text-critical" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-foreground">Today's Expenses</p>
+              <p className="text-xs text-muted-foreground">{todaysExpenses.length} logged today</p>
+            </div>
+          </div>
+          <p className="text-lg font-bold text-critical">₦{todaysExpenseTotal.toLocaleString()}</p>
+        </button>
 
         {/* Distributor Feed */}
         <div className="mb-6">

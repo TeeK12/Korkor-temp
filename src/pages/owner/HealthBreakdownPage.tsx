@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, Lock, Shield, Target, Sparkles, Loader2 } from "lucide-react";
 import { products } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const HealthBreakdownPage = () => {
   const navigate = useNavigate();
   const { businessName, setBusinessTarget } = useAuth();
+  const { expenses } = useExpenses();
   const [activeTab, setActiveTab] = useState<"breakdown" | "target">("breakdown");
 
   // Target state
@@ -30,13 +32,14 @@ const HealthBreakdownPage = () => {
   );
   const totalAssets = inventoryValue + weeklyRevenue;
 
-  // Liabilities
+  // Liabilities — now includes operational expenses
   const totalCostOfGoods = products.reduce((s, p) => s + p.costPrice * Math.ceil(p.currentStock / p.unitsPerBuyingUnit), 0);
-  const totalExpenses = Math.round(totalCostOfGoods * 0.12);
+  const productExpenses = Math.round(totalCostOfGoods * 0.12);
+  const operationalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const deadStockValue = products
     .filter((p) => p.status === "dead")
     .reduce((s, p) => s + p.currentStock * (p.costPrice / p.unitsPerBuyingUnit), 0);
-  const totalLiabilities = totalCostOfGoods + totalExpenses + deadStockValue;
+  const totalLiabilities = totalCostOfGoods + productExpenses + operationalExpenses + deadStockValue;
 
   // Score
   const score = totalAssets + totalLiabilities > 0
@@ -190,8 +193,12 @@ const HealthBreakdownPage = () => {
                   <span className="text-sm text-foreground">{fmt(totalCostOfGoods)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Total expenses</span>
-                  <span className="text-sm text-foreground">{fmt(totalExpenses)}</span>
+                  <span className="text-sm text-muted-foreground">Product expenses</span>
+                  <span className="text-sm text-foreground">{fmt(productExpenses)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Operational expenses</span>
+                  <span className="text-sm text-critical">{fmt(operationalExpenses)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-muted-foreground">Dead stock value</span>

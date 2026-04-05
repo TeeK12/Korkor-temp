@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Flame, TrendingUp, Star, Zap, Target, Swords } from "lucide-react";
+import { Flame, TrendingUp, Star, Zap, Target, Swords, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const PerformancePage = () => {
-  const { setPersonalTarget } = useAuth();
+  const { setPersonalTarget, userName } = useAuth();
+  const { getAgentExpenses } = useExpenses();
   const weeklyTotal = 87;
   const bestDay = "Thursday";
   const topProduct = "Indomie Chicken";
@@ -260,6 +262,38 @@ const PerformancePage = () => {
             ))}
           </div>
         </div>
+
+        {/* Expenses Logged */}
+        {(() => {
+          const agentExp = getAgentExpenses(userName || "Agent");
+          const now = new Date();
+          const sow = new Date(now);
+          sow.setDate(now.getDate() - now.getDay());
+          sow.setHours(0, 0, 0, 0);
+          const weekExp = agentExp.filter((e) => new Date(e.date) >= sow);
+          const weekTotal = weekExp.reduce((s, e) => s + e.amount, 0);
+          return (
+            <div className="bg-card rounded-2xl p-4 border border-border mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Receipt className="w-4 h-4 text-critical" />
+                <span className="text-sm font-semibold text-foreground">Expenses Logged</span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">This week: <span className="text-critical font-bold">₦{weekTotal.toLocaleString()}</span></p>
+              <div className="space-y-2">
+                {weekExp.length === 0 && <p className="text-xs text-muted-foreground">No expenses this week</p>}
+                {weekExp.slice(0, 5).map((e) => (
+                  <div key={e.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-foreground">{e.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(e.date).toLocaleDateString()}</p>
+                    </div>
+                    <p className="text-sm font-bold text-critical">₦{e.amount.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
       <AgentBottomNav />
     </div>
