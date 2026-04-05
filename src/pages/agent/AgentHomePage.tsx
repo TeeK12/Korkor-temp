@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, TrendingUp, Flame, Target, Building2 } from "lucide-react";
+import { ShoppingCart, TrendingUp, Flame, Target, Building2, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const AgentHomePage = () => {
   const navigate = useNavigate();
   const { userName, isAuthorized, businessName, businessTarget, personalTarget } = useAuth();
+  const { getAgentExpenses } = useExpenses();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -22,9 +24,18 @@ const AgentHomePage = () => {
   ];
 
   const todaysTotal = recentSales.reduce((s, sale) => s + sale.value, 0);
-  const allTimeTotal = 247500; // Mock cumulative
+  const allTimeTotal = 247500;
 
   const hasPersonalTarget = !!personalTarget;
+
+  // Agent's own expenses this week
+  const agentExpenses = getAgentExpenses(userName || "Agent");
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weekExpenses = agentExpenses.filter((e) => new Date(e.date) >= startOfWeek);
+  const weekExpenseTotal = weekExpenses.reduce((s, e) => s + e.amount, 0);
 
   return (
     <div className="app-shell bg-background">
@@ -136,6 +147,15 @@ const AgentHomePage = () => {
             ))}
           </div>
         </div>
+
+        {/* Log Expense button */}
+        <button
+          onClick={() => navigate("/agent/log-expense")}
+          className="w-full py-3 rounded-2xl border border-border bg-card text-sm font-medium text-muted-foreground flex items-center justify-center gap-2 mb-4"
+        >
+          <Receipt className="w-4 h-4" />
+          Log Expense
+        </button>
 
         {/* Daily Total + All Time Total */}
         <div className="grid grid-cols-2 gap-3 mb-6">

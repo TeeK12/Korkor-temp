@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Zap, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { products } from "@/data/mockData";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const periods = [
@@ -14,6 +15,7 @@ const periods = [
 
 const ReportsPage = () => {
   const navigate = useNavigate();
+  const { expenses } = useExpenses();
   const [periodIndex, setPeriodIndex] = useState(0);
   const [period, setPeriod] = useState<"daily" | "weekly">("daily");
 
@@ -23,7 +25,11 @@ const ReportsPage = () => {
   const topProducts = [...products].sort((a, b) => b.salesHistory[idx] - a.salesHistory[idx]).slice(0, 3);
   const slowProducts = [...products].sort((a, b) => a.salesHistory[idx] - b.salesHistory[idx]).slice(0, 3);
   const totalRevenue = products.reduce((s, p) => s + p.salesHistory[idx] * p.sellingPrice, 0);
-  const totalCost = products.reduce((s, p) => s + p.salesHistory[idx] * (p.costPrice / p.unitsPerBuyingUnit), 0);
+  const totalProductCost = products.reduce((s, p) => s + p.salesHistory[idx] * (p.costPrice / p.unitsPerBuyingUnit), 0);
+
+  // Operational expenses total (use all for simplicity since we don't have real period filtering on mock)
+  const operationalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalCost = totalProductCost + operationalExpenses;
   const netProfit = totalRevenue - totalCost;
 
   return (
@@ -94,7 +100,8 @@ const ReportsPage = () => {
           >
             <p className="text-xs text-muted-foreground">Cost</p>
             <p className="text-xl font-bold text-foreground">₦{Math.round(totalCost).toLocaleString()}</p>
-            <p className="text-[10px] text-primary mt-1">Tap for breakdown →</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Incl. ₦{operationalExpenses.toLocaleString()} expenses</p>
+            <p className="text-[10px] text-primary mt-0.5">Tap for breakdown →</p>
           </button>
         </div>
 

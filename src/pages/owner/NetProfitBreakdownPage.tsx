@@ -1,11 +1,13 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { products } from "@/data/mockData";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const NetProfitBreakdownPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { expenses } = useExpenses();
   const periodIndex = parseInt(searchParams.get("period") || "0");
 
   const periods = [
@@ -30,7 +32,9 @@ const NetProfitBreakdownPage = () => {
     .sort((a, b) => b.profit - a.profit);
 
   const totalRevenue = productBreakdown.reduce((s, p) => s + p.revenue, 0);
-  const totalCost = productBreakdown.reduce((s, p) => s + p.cost, 0);
+  const totalProductCost = productBreakdown.reduce((s, p) => s + p.cost, 0);
+  const totalOperational = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalCost = totalProductCost + totalOperational;
   const netProfit = totalRevenue - totalCost;
 
   return (
@@ -50,8 +54,12 @@ const NetProfitBreakdownPage = () => {
             <span className="text-sm font-semibold text-success">₦{totalRevenue.toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Total Cost</span>
-            <span className="text-sm font-semibold text-foreground">₦{Math.round(totalCost).toLocaleString()}</span>
+            <span className="text-sm text-muted-foreground">Product Costs</span>
+            <span className="text-sm font-semibold text-foreground">₦{Math.round(totalProductCost).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Operational Expenses</span>
+            <span className="text-sm font-semibold text-critical">₦{totalOperational.toLocaleString()}</span>
           </div>
           <div className="border-t border-border pt-2">
             <div className="flex justify-between">
