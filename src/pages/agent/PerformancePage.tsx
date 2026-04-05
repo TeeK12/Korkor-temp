@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Flame, TrendingUp, Star, Zap, Target, Swords } from "lucide-react";
+import { Flame, TrendingUp, Star, Zap, Target, Swords, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useExpenses } from "@/contexts/ExpensesContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const PerformancePage = () => {
