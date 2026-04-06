@@ -2,14 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { ShoppingCart, TrendingUp, Flame, Target, Building2, Receipt } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useExpenses } from "@/contexts/ExpensesContext";
+import ServiceTimers from "@/components/ServiceTimer";
 import AgentBottomNav from "@/components/AgentBottomNav";
 
 const AgentHomePage = () => {
   const navigate = useNavigate();
-  const { userName, isAuthorized, businessName, businessTarget, personalTarget } = useAuth();
+  const { userName, isAuthorized, businessName, businessTarget, personalTarget, businessType } = useAuth();
   const { getAgentExpenses } = useExpenses();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  const isService = businessType === "service";
 
   const todaySales = 14;
   const dailyTarget = 25;
@@ -45,6 +48,9 @@ const AgentHomePage = () => {
           <p className="text-sm text-muted-foreground">{greeting},</p>
           <h1 className="text-xl font-bold text-foreground">{userName || "Chidi"} 👋</h1>
         </div>
+
+        {/* Service Timers — only for service businesses */}
+        {isService && <ServiceTimers />}
 
         {/* Personal Target Progress — only if set */}
         {hasPersonalTarget && (
@@ -109,7 +115,7 @@ const AgentHomePage = () => {
             className="w-full h-14 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 mb-4 shadow-lg bg-primary text-primary-foreground shadow-primary/20"
           >
             <ShoppingCart className="w-5 h-5" />
-            Record a Sale
+            {isService ? "Record a Session" : "Record a Sale"}
           </button>
         )}
 
@@ -117,7 +123,7 @@ const AgentHomePage = () => {
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="bg-card rounded-2xl p-3 border border-border text-center">
             <p className="text-2xl font-bold text-primary">{todaySales}</p>
-            <p className="text-[10px] text-muted-foreground">Sales</p>
+            <p className="text-[10px] text-muted-foreground">{isService ? "Sessions" : "Sales"}</p>
           </div>
           <div className="bg-card rounded-2xl p-3 border border-border text-center">
             <p className="text-lg font-bold text-foreground">₦{totalValue.toLocaleString()}</p>
@@ -134,7 +140,7 @@ const AgentHomePage = () => {
 
         {/* Recent Activity */}
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Recent Sales</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{isService ? "Recent Sessions" : "Recent Sales"}</h2>
           <div className="space-y-2">
             {recentSales.map((sale, i) => (
               <div key={i} className="bg-card rounded-xl p-3 border border-border flex items-center justify-between">

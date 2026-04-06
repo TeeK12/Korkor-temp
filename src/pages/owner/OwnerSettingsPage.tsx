@@ -1,17 +1,23 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, User, CreditCard, Info, ChevronRight, LogOut } from "lucide-react";
+import { ArrowLeft, Building2, User, CreditCard, Info, ChevronRight, LogOut, Package, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const OwnerSettingsPage = () => {
   const navigate = useNavigate();
-  const { logout, businessName, userName } = useAuth();
+  const { logout, businessName, userName, businessType, setBusinessType } = useAuth();
 
   const sections = [
     {
       title: "Business Profile",
       items: [
         { icon: Building2, label: "Business name, category, location", action: () => {} },
+        {
+          icon: businessType === "service" ? Clock : Package,
+          label: `Business type: ${businessType === "service" ? "Service" : "Product"}`,
+          action: () => setBusinessType(businessType === "service" ? "product" : "service"),
+          sublabel: "Tap to switch",
+        },
       ],
     },
     {
@@ -58,10 +64,13 @@ const OwnerSettingsPage = () => {
         {sections.map((section) => (
           <div key={section.title} className="mb-5">
             <p className="text-xs text-muted-foreground font-medium mb-2 uppercase tracking-wider">{section.title}</p>
-            {section.items.map((item, i) => (
+            {section.items.map((item: any, i) => (
               <button key={i} onClick={item.action} className="w-full flex items-center gap-3 py-3 border-b border-border last:border-0">
                 <item.icon className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-foreground flex-1 text-left">{item.label}</span>
+                <div className="flex-1 text-left">
+                  <span className="text-sm text-foreground block">{item.label}</span>
+                  {item.sublabel && <span className="text-[10px] text-primary">{item.sublabel}</span>}
+                </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             ))}
