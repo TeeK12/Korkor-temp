@@ -29,11 +29,12 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  loginAsOwner: (businessName: string, ownerName: string) => void;
-  loginAsAgent: (agentName: string, businessName: string, authorized?: boolean) => void;
+  loginAsOwner: (businessName: string, ownerName: string, businessType?: BusinessType) => void;
+  loginAsAgent: (agentName: string, businessName: string, authorized?: boolean, businessType?: BusinessType) => void;
   setAuthorized: (authorized: boolean) => void;
   setBusinessTarget: (target: BusinessTarget | null) => void;
   setPersonalTarget: (target: PersonalTarget | null) => void;
+  setBusinessType: (type: BusinessType) => void;
   logout: () => void;
 }
 
