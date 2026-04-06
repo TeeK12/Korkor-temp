@@ -1,17 +1,29 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Package, Users, BarChart3, Newspaper } from "lucide-react";
+import { Home, Package, Users, BarChart3, Newspaper, Coins } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const OwnerBottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { businessType } = useAuth();
 
-  const items = [
-    { icon: Home, label: "Home", path: "/owner" },
-    { icon: Package, label: "Inventory", path: "/owner/inventory" },
-    { icon: Users, label: "Agents", path: "/owner/agents" },
-    { icon: BarChart3, label: "Reports", path: "/owner/reports" },
-    { icon: Newspaper, label: "Feed", path: "/owner/feed" },
-  ];
+  const isService = businessType === "service";
+
+  const items = isService
+    ? [
+        { icon: Home, label: "Home", path: "/owner" },
+        { icon: Coins, label: "Services", path: "/owner/services" },
+        { icon: Users, label: "Agents", path: "/owner/agents" },
+        { icon: BarChart3, label: "Reports", path: "/owner/reports" },
+        { icon: Newspaper, label: "Feed", path: "/owner/feed" },
+      ]
+    : [
+        { icon: Home, label: "Home", path: "/owner" },
+        { icon: Package, label: "Inventory", path: "/owner/inventory" },
+        { icon: Users, label: "Agents", path: "/owner/agents" },
+        { icon: BarChart3, label: "Reports", path: "/owner/reports" },
+        { icon: Newspaper, label: "Feed", path: "/owner/feed" },
+      ];
 
   return (
     <nav className="absolute bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-sm border-t border-border">

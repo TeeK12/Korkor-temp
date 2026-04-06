@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown, Package, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { businessCategories, nigerianStates } from "@/data/mockData";
 
 const OwnerSignupPage = () => {
   const navigate = useNavigate();
   const { loginAsOwner } = useAuth();
+  const [step, setStep] = useState<"details" | "type">("details");
   const [form, setForm] = useState({
     businessName: "",
     ownerName: "",
@@ -16,14 +17,83 @@ const OwnerSignupPage = () => {
     area: "",
     password: "",
   });
+  const [businessType, setBusinessType] = useState<"product" | "service" | null>(null);
 
   const update = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
 
-  const handleSubmit = () => {
+  const handleDetailsNext = () => {
     if (!form.businessName || !form.ownerName || !form.phone || !form.password) return;
-    loginAsOwner(form.businessName, form.ownerName);
+    setStep("type");
+  };
+
+  const handleSubmit = () => {
+    if (!businessType) return;
+    loginAsOwner(form.businessName, form.ownerName, businessType);
     navigate("/owner");
   };
+
+  if (step === "type") {
+    return (
+      <div className="app-shell dark bg-background">
+        <div className="page-content px-5 pt-4">
+          <button onClick={() => setStep("details")} className="flex items-center gap-1 text-muted-foreground mb-6">
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm">Back</span>
+          </button>
+
+          <h1 className="text-2xl font-bold text-foreground mb-1">What type of business do you run?</h1>
+          <p className="text-sm text-muted-foreground mb-8">This determines which tools you'll see</p>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => setBusinessType("product")}
+              className={`w-full rounded-xl p-5 border-2 text-left transition-all ${
+                businessType === "product" ? "border-primary bg-primary/5" : "border-border bg-card"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${businessType === "product" ? "bg-primary/20" : "bg-muted"}`}>
+                  <Package className={`w-6 h-6 ${businessType === "product" ? "text-primary" : "text-muted-foreground"}`} />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Product Business</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                You buy and sell physical goods — provisions, electronics, fashion, food items etc.
+              </p>
+            </button>
+
+            <button
+              onClick={() => setBusinessType("service")}
+              className={`w-full rounded-xl p-5 border-2 text-left transition-all ${
+                businessType === "service" ? "border-primary bg-primary/5" : "border-border bg-card"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${businessType === "service" ? "bg-primary/20" : "bg-muted"}`}>
+                  <Clock className={`w-6 h-6 ${businessType === "service" ? "text-primary" : "text-muted-foreground"}`} />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Service Business</h3>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                You sell time or sessions — game house, salon, cyber cafe, viewing centre etc.
+              </p>
+              <p className="text-xs text-primary/70 mt-2 leading-relaxed">
+                If you run your business alone, set up here then create a staff account for yourself to record daily services.
+              </p>
+            </button>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!businessType}
+            className="w-full h-12 mt-6 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-50 hover:bg-primary/90 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell dark bg-background">
@@ -108,10 +178,10 @@ const OwnerSignupPage = () => {
           </div>
 
           <button
-            onClick={handleSubmit}
+            onClick={handleDetailsNext}
             className="w-full h-12 mt-4 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
           >
-            Create Account
+            Continue
           </button>
         </div>
       </div>
