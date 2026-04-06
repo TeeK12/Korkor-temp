@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    setAuth({ isAuthenticated: false, role: null, userName: "", businessName: "", isAuthorized: false, businessTarget: null, personalTarget: null });
+    setAuth({ isAuthenticated: false, role: null, businessType: null, userName: "", businessName: "", isAuthorized: false, businessTarget: null, personalTarget: null });
   };
 
   return (
