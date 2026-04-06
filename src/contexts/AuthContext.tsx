@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 type UserRole = "owner" | "agent" | null;
+type BusinessType = "product" | "service" | null;
 
 interface BusinessTarget {
   metric: "revenue" | "units";
