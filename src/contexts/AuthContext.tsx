@@ -20,6 +20,7 @@ interface PersonalTarget {
 interface AuthState {
   isAuthenticated: boolean;
   role: UserRole;
+  businessType: BusinessType;
   userName: string;
   businessName: string;
   isAuthorized: boolean;
