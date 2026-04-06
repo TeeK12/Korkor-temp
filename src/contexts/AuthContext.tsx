@@ -58,12 +58,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     personalTarget: null,
   });
 
-  const loginAsOwner = (businessName: string, ownerName: string) => {
-    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "owner", userName: ownerName, businessName, isAuthorized: true }));
+  const loginAsOwner = (businessName: string, ownerName: string, businessType: BusinessType = "product") => {
+    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "owner", businessType, userName: ownerName, businessName, isAuthorized: true }));
   };
 
-  const loginAsAgent = (agentName: string, businessName: string, authorized = false) => {
-    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "agent", userName: agentName, businessName, isAuthorized: authorized }));
+  const loginAsAgent = (agentName: string, businessName: string, authorized = false, businessType: BusinessType = "product") => {
+    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "agent", businessType, userName: agentName, businessName, isAuthorized: authorized }));
+  };
+
+  const setBusinessType = (type: BusinessType) => {
+    setAuth((prev) => ({ ...prev, businessType: type }));
   };
 
   const setAuthorized = (authorized: boolean) => {
