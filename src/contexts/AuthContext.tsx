@@ -50,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
     role: null,
+    businessType: null,
     userName: "",
     businessName: "",
     isAuthorized: false,
