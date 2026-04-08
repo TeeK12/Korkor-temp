@@ -56,6 +56,15 @@ const OwnerDashboard = () => {
           </div>
         </div>
 
+        {/* Record a Sale Button */}
+        <button
+          onClick={() => navigate("/owner/record-sale")}
+          className="w-full bg-primary rounded-lg p-4 mb-4 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
+        >
+          <Plus className="w-5 h-5 text-primary-foreground" />
+          <span className="text-sm font-bold text-primary-foreground">Record a Sale</span>
+        </button>
+
         {/* AI Brief */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2 mb-2">
