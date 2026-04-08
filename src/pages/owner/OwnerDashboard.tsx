@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt } from "lucide-react";
+import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/mockData";
 import { distributorFeedItems } from "@/data/distributors";
