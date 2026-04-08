@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt } from "lucide-react";
+import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/mockData";
 import { distributorFeedItems } from "@/data/distributors";
@@ -55,6 +55,15 @@ const OwnerDashboard = () => {
             <div className="h-full rounded-full bg-warning" style={{ width: "72%" }} />
           </div>
         </div>
+
+        {/* Record a Sale Button */}
+        <button
+          onClick={() => navigate("/owner/record-sale")}
+          className="w-full bg-primary rounded-lg p-4 mb-4 flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
+        >
+          <Plus className="w-5 h-5 text-primary-foreground" />
+          <span className="text-sm font-bold text-primary-foreground">Record a Sale</span>
+        </button>
 
         {/* AI Brief */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
