@@ -58,7 +58,7 @@ const NetProfitBreakdownPage = () => {
             <span className="text-sm font-semibold text-foreground">₦{Math.round(totalProductCost).toLocaleString()}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Operational Expenses</span>
+            <span className="text-sm text-muted-foreground">Daily Expenses</span>
             <span className="text-sm font-semibold text-critical">₦{totalOperational.toLocaleString()}</span>
           </div>
           <div className="border-t border-border pt-2">

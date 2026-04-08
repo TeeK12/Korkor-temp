@@ -88,8 +88,8 @@ const CostBreakdownPage = () => {
           ))}
         </div>
 
-        {/* Section 2: Operational Expenses */}
-        <h3 className="text-sm font-semibold text-foreground mb-3">Operational Expenses</h3>
+        {/* Section 2: Daily Expenses */}
+        <h3 className="text-sm font-semibold text-foreground mb-3">Daily Expenses</h3>
         <div className="space-y-3 mb-6">
           {operationalExpenses.map((e) => (
             <div key={e.id} className="bg-card rounded-lg p-4 border border-border flex items-center justify-between">
@@ -111,7 +111,7 @@ const CostBreakdownPage = () => {
             </div>
           ))}
           {operationalExpenses.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-4">No operational expenses logged</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No daily expenses logged</p>
           )}
         </div>
 
@@ -127,7 +127,7 @@ const CostBreakdownPage = () => {
               <span className="text-sm font-semibold text-foreground">₦{totalProductExpenses.toLocaleString()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Operational Expenses</span>
+              <span className="text-xs text-muted-foreground">Daily Expenses</span>
               <span className="text-sm font-semibold text-critical">₦{totalOperational.toLocaleString()}</span>
             </div>
             <div className="h-px bg-border my-1" />
