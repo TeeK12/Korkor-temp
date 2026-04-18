@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-type UserRole = "owner" | "agent" | null;
+type UserRole = "owner" | "agent" | "distributor" | null;
 type BusinessType = "product" | "service" | null;
 
 interface BusinessTarget {
@@ -31,6 +31,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   loginAsOwner: (businessName: string, ownerName: string, businessType?: BusinessType) => void;
   loginAsAgent: (agentName: string, businessName: string, authorized?: boolean, businessType?: BusinessType) => void;
+  loginAsDistributor: (businessName: string, ownerName: string) => void;
   setAuthorized: (authorized: boolean) => void;
   setBusinessTarget: (target: BusinessTarget | null) => void;
   setPersonalTarget: (target: PersonalTarget | null) => void;
@@ -66,6 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "agent", businessType, userName: agentName, businessName, isAuthorized: authorized }));
   };
 
+  const loginAsDistributor = (businessName: string, ownerName: string) => {
+    setAuth((prev) => ({ ...prev, isAuthenticated: true, role: "distributor", businessType: null, userName: ownerName, businessName, isAuthorized: true }));
+  };
+
   const setBusinessType = (type: BusinessType) => {
     setAuth((prev) => ({ ...prev, businessType: type }));
   };
@@ -87,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, setAuthorized, setBusinessTarget, setPersonalTarget, setBusinessType, logout }}>
+    <AuthContext.Provider value={{ ...auth, loginAsOwner, loginAsAgent, loginAsDistributor, setAuthorized, setBusinessTarget, setPersonalTarget, setBusinessType, logout }}>
       {children}
     </AuthContext.Provider>
   );

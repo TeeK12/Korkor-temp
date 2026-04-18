@@ -7,16 +7,17 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ExpensesProvider } from "@/contexts/ExpensesContext";
 import { ServiceProvider } from "@/contexts/ServiceContext";
 import { SalesProvider } from "@/contexts/SalesContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { DistributorProvider } from "@/contexts/DistributorContext";
 
 // Auth pages
 import LandingPage from "./pages/LandingPage";
 import OwnerSignupPage from "./pages/OwnerSignupPage";
 import AgentSignupPage from "./pages/AgentSignupPage";
+import DistributorSignupPage from "./pages/DistributorSignupPage";
 import LoginPage from "./pages/LoginPage";
 
 // Owner pages
-import OwnerDashboard from "./pages/owner/OwnerDashboard";
-import ServiceDashboard from "./pages/owner/ServiceDashboard";
 import HealthBreakdownPage from "./pages/owner/HealthBreakdownPage";
 import InventoryPage from "./pages/owner/InventoryPage";
 import ProductDetailPage from "./pages/owner/ProductDetailPage";
@@ -38,6 +39,9 @@ import ServicesChipsPage from "./pages/owner/ServicesChipsPage";
 import AddServicePage from "./pages/owner/AddServicePage";
 import OwnerRecordSalePage from "./pages/owner/OwnerRecordSalePage";
 import PromiseTrackerPage from "./pages/owner/PromiseTrackerPage";
+import CartPage from "./pages/owner/CartPage";
+import CheckoutPage from "./pages/owner/CheckoutPage";
+import GoodwillDistributorsPage from "./pages/owner/GoodwillDistributorsPage";
 
 // Agent pages
 import AgentHomePage from "./pages/agent/AgentHomePage";
@@ -50,10 +54,23 @@ import AgentSettingsPage from "./pages/agent/AgentSettingsPage";
 import TargetBreakdownPage from "./pages/agent/TargetBreakdownPage";
 import AgentLogExpensePage from "./pages/agent/LogExpensePage";
 
+// Distributor pages
+import DistributorDashboard from "./pages/distributor/DistributorDashboard";
+import DistributorInventoryPage from "./pages/distributor/DistributorInventoryPage";
+import DistributorAddProductPage from "./pages/distributor/DistributorAddProductPage";
+import DistributorOrdersPage from "./pages/distributor/DistributorOrdersPage";
+import DistributorOrderDetailPage from "./pages/distributor/DistributorOrderDetailPage";
+import DistributorReportsPage from "./pages/distributor/DistributorReportsPage";
+import DistributorNotificationsPage from "./pages/distributor/DistributorNotificationsPage";
+import DistributorSettingsPage from "./pages/distributor/DistributorSettingsPage";
+import DistributorProfileSelfPage from "./pages/distributor/DistributorProfileSelfPage";
+
 // Shared pages
 import FeedPage from "./pages/shared/FeedPage";
+import OwnerProfilePage from "./pages/shared/OwnerProfilePage";
 import OwnerBottomNav from "./components/OwnerBottomNav";
 import AgentBottomNav from "./components/AgentBottomNav";
+import DistributorBottomNav from "./components/DistributorBottomNav";
 
 // Smart router components
 import OwnerHome from "./pages/owner/OwnerHome";
@@ -72,54 +89,75 @@ const App = () => (
         <ExpensesProvider>
           <ServiceProvider>
             <SalesProvider>
-              <BrowserRouter>
-                <Routes>
-                  {/* Auth */}
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/signup/owner" element={<OwnerSignupPage />} />
-                  <Route path="/signup/agent" element={<AgentSignupPage />} />
-                  <Route path="/login" element={<LoginPage />} />
+              <DistributorProvider>
+                <CartProvider>
+                  <BrowserRouter>
+                    <Routes>
+                      {/* Auth */}
+                      <Route path="/" element={<LandingPage />} />
+                      <Route path="/signup/owner" element={<OwnerSignupPage />} />
+                      <Route path="/signup/agent" element={<AgentSignupPage />} />
+                      <Route path="/signup/distributor" element={<DistributorSignupPage />} />
+                      <Route path="/login" element={<LoginPage />} />
 
-                  {/* Owner */}
-                  <Route path="/owner" element={<OwnerHome />} />
-                  <Route path="/owner/health" element={<HealthBreakdownPage />} />
-                  <Route path="/owner/inventory" element={<InventoryPage />} />
-                  <Route path="/owner/product/:id" element={<ProductDetailPage />} />
-                  <Route path="/owner/product/add" element={<AddProductPage />} />
-                  <Route path="/owner/product/edit/:id" element={<AddProductPage />} />
-                  <Route path="/owner/services" element={<ServicesChipsPage />} />
-                  <Route path="/owner/service/add" element={<AddServicePage />} />
-                  <Route path="/owner/agents" element={<AgentsPage />} />
-                  <Route path="/owner/agent/:id" element={<AgentDetailPage />} />
-                  <Route path="/owner/reports" element={<ReportsPage />} />
-                  <Route path="/owner/reports/revenue" element={<RevenueBreakdownPage />} />
-                  <Route path="/owner/reports/cost" element={<CostBreakdownPage />} />
-                  <Route path="/owner/reports/profit" element={<NetProfitBreakdownPage />} />
-                  <Route path="/owner/restock" element={<RestockPage />} />
-                  <Route path="/owner/distributor" element={<DistributorPage />} />
-                  <Route path="/owner/distributor/:id" element={<DistributorProfilePage />} />
-                  <Route path="/owner/notifications" element={<OwnerNotificationsPage />} />
-                  <Route path="/owner/settings" element={<OwnerSettingsPage />} />
-                  <Route path="/owner/expenses" element={<ExpensesHistoryPage />} />
-                  <Route path="/owner/expenses/log" element={<LogExpensePage />} />
-                  <Route path="/owner/record-sale" element={<OwnerRecordSalePage />} />
-                  <Route path="/owner/promises" element={<PromiseTrackerPage />} />
-                  <Route path="/owner/feed" element={<FeedPage variant="owner" BottomNav={OwnerBottomNav} />} />
+                      {/* Owner */}
+                      <Route path="/owner" element={<OwnerHome />} />
+                      <Route path="/owner/health" element={<HealthBreakdownPage />} />
+                      <Route path="/owner/inventory" element={<InventoryPage />} />
+                      <Route path="/owner/product/:id" element={<ProductDetailPage />} />
+                      <Route path="/owner/product/add" element={<AddProductPage />} />
+                      <Route path="/owner/product/edit/:id" element={<AddProductPage />} />
+                      <Route path="/owner/services" element={<ServicesChipsPage />} />
+                      <Route path="/owner/service/add" element={<AddServicePage />} />
+                      <Route path="/owner/agents" element={<AgentsPage />} />
+                      <Route path="/owner/agent/:id" element={<AgentDetailPage />} />
+                      <Route path="/owner/reports" element={<ReportsPage />} />
+                      <Route path="/owner/reports/revenue" element={<RevenueBreakdownPage />} />
+                      <Route path="/owner/reports/cost" element={<CostBreakdownPage />} />
+                      <Route path="/owner/reports/profit" element={<NetProfitBreakdownPage />} />
+                      <Route path="/owner/restock" element={<RestockPage />} />
+                      <Route path="/owner/distributor" element={<DistributorPage />} />
+                      <Route path="/owner/distributor/:id" element={<DistributorProfilePage />} />
+                      <Route path="/owner/cart" element={<CartPage />} />
+                      <Route path="/owner/checkout" element={<CheckoutPage />} />
+                      <Route path="/owner/goodwill-distributors" element={<GoodwillDistributorsPage />} />
+                      <Route path="/owner/notifications" element={<OwnerNotificationsPage />} />
+                      <Route path="/owner/settings" element={<OwnerSettingsPage />} />
+                      <Route path="/owner/expenses" element={<ExpensesHistoryPage />} />
+                      <Route path="/owner/expenses/log" element={<LogExpensePage />} />
+                      <Route path="/owner/record-sale" element={<OwnerRecordSalePage />} />
+                      <Route path="/owner/promises" element={<PromiseTrackerPage />} />
+                      <Route path="/owner/feed" element={<FeedPage variant="owner" BottomNav={OwnerBottomNav} />} />
 
-                  {/* Agent */}
-                  <Route path="/agent" element={<AgentHomePage />} />
-                  <Route path="/agent/record-sale" element={<AgentRecordSale />} />
-                  <Route path="/agent/stock-count" element={<StockCountPage />} />
-                  <Route path="/agent/performance" element={<PerformancePage />} />
-                  <Route path="/agent/recommendations" element={<RecommendationsPage />} />
-                  <Route path="/agent/settings" element={<AgentSettingsPage />} />
-                  <Route path="/agent/target-breakdown" element={<TargetBreakdownPage />} />
-                  <Route path="/agent/log-expense" element={<AgentLogExpensePage />} />
-                  <Route path="/agent/feed" element={<FeedPage variant="agent" BottomNav={AgentBottomNav} />} />
+                      {/* Agent */}
+                      <Route path="/agent" element={<AgentHomePage />} />
+                      <Route path="/agent/record-sale" element={<AgentRecordSale />} />
+                      <Route path="/agent/stock-count" element={<StockCountPage />} />
+                      <Route path="/agent/performance" element={<PerformancePage />} />
+                      <Route path="/agent/recommendations" element={<RecommendationsPage />} />
+                      <Route path="/agent/settings" element={<AgentSettingsPage />} />
+                      <Route path="/agent/target-breakdown" element={<TargetBreakdownPage />} />
+                      <Route path="/agent/log-expense" element={<AgentLogExpensePage />} />
+                      <Route path="/agent/feed" element={<FeedPage variant="agent" BottomNav={AgentBottomNav} />} />
 
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
+                      {/* Distributor */}
+                      <Route path="/distributor" element={<DistributorDashboard />} />
+                      <Route path="/distributor/inventory" element={<DistributorInventoryPage />} />
+                      <Route path="/distributor/inventory/add" element={<DistributorAddProductPage />} />
+                      <Route path="/distributor/orders" element={<DistributorOrdersPage />} />
+                      <Route path="/distributor/order/:id" element={<DistributorOrderDetailPage />} />
+                      <Route path="/distributor/reports" element={<DistributorReportsPage />} />
+                      <Route path="/distributor/notifications" element={<DistributorNotificationsPage />} />
+                      <Route path="/distributor/settings" element={<DistributorSettingsPage />} />
+                      <Route path="/distributor/profile" element={<DistributorProfileSelfPage />} />
+                      <Route path="/distributor/owner/:id" element={<OwnerProfilePage />} />
+                      <Route path="/distributor/feed" element={<FeedPage variant="owner" BottomNav={DistributorBottomNav} />} />
+
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </CartProvider>
+              </DistributorProvider>
             </SalesProvider>
           </ServiceProvider>
         </ExpensesProvider>

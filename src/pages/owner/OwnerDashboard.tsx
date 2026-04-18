@@ -167,7 +167,15 @@ const OwnerDashboard = () => {
 
         {/* Distributor Feed */}
         <div className="mb-6">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Distributor Feed</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-foreground">Distributor Feed</h2>
+            <button
+              onClick={() => navigate("/owner/goodwill-distributors")}
+              className="text-[11px] px-2.5 py-1 rounded-full bg-warning/10 text-warning border border-warning/30 font-medium"
+            >
+              🤝 Products In Good Faith
+            </button>
+          </div>
           <div className="space-y-3">
             {distributorFeedItems.slice(0, 8).map((item) => (
               <div key={item.id} className="bg-card rounded-lg p-4 border border-border">

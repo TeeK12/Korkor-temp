@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { Building2, Users } from "lucide-react";
+import { Building2, Users, Truck } from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
 
   return (
     <div className="app-shell bg-deep flex flex-col items-center justify-center px-6">
-      <div className="flex-1 flex flex-col items-center justify-center gap-12 w-full animate-fade-in">
+      <div className="flex-1 flex flex-col items-center justify-center gap-10 w-full animate-fade-in">
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-4xl font-bold text-primary tracking-tight">
@@ -18,7 +18,7 @@ const LandingPage = () => {
         </div>
 
         {/* Role Selection */}
-        <div className="w-full space-y-4 max-w-sm">
+        <div className="w-full space-y-3 max-w-sm">
           <button
             onClick={() => navigate("/signup/owner")}
             className="w-full flex items-center gap-4 p-5 rounded-lg border border-border bg-card/50 hover:bg-card transition-colors text-left"
@@ -45,6 +45,21 @@ const LandingPage = () => {
               <p className="font-semibold text-foreground">I'm an Agent</p>
               <p className="text-sm text-muted-foreground">
                 Record sales, track performance, build your career
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate("/signup/distributor")}
+            className="w-full flex items-center gap-4 p-5 rounded-lg border border-border bg-card/50 hover:bg-card transition-colors text-left"
+          >
+            <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+              <Truck className="w-6 h-6 text-success" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">I'm a Distributor</p>
+              <p className="text-sm text-muted-foreground">
+                You supply goods to businesses. Manage products, orders and relationships.
               </p>
             </div>
           </button>

@@ -5,8 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { loginAsOwner, loginAsAgent } = useAuth();
-  const [mode, setMode] = useState<"owner" | "agent">("owner");
+  const { loginAsOwner, loginAsAgent, loginAsDistributor } = useAuth();
+  const [mode, setMode] = useState<"owner" | "agent" | "distributor">("owner");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
@@ -15,9 +15,12 @@ const LoginPage = () => {
     if (mode === "owner") {
       loginAsOwner("Mama Nkechi Provisions", "Nkechi Okafor");
       navigate("/owner");
-    } else {
+    } else if (mode === "agent") {
       loginAsAgent("Chidi Okonkwo", "Mama Nkechi Provisions");
       navigate("/agent");
+    } else {
+      loginAsDistributor("Peak Milk Depot", "Bola Adesina");
+      navigate("/distributor");
     }
   };
 
@@ -33,16 +36,16 @@ const LoginPage = () => {
         <p className="text-sm text-muted-foreground mb-8">Log in to your Bulkbook account</p>
 
         {/* Toggle */}
-        <div className="flex rounded-lg bg-muted p-1 mb-8">
-          {(["owner", "agent"] as const).map((m) => (
+        <div className="flex rounded-lg bg-muted p-1 mb-8 gap-1">
+          {(["owner", "agent", "distributor"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`flex-1 h-10 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 h-10 rounded-md text-xs font-medium transition-colors ${
                 mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {m === "owner" ? "Business Owner" : "Agent"}
+              {m === "owner" ? "Owner" : m === "agent" ? "Agent" : "Distributor"}
             </button>
           ))}
         </div>
@@ -59,7 +62,7 @@ const LoginPage = () => {
             />
           </div>
 
-          {mode === "owner" ? (
+          {mode !== "agent" ? (
             <div>
               <label className="text-sm font-medium text-foreground block mb-1.5">Password</label>
               <input
