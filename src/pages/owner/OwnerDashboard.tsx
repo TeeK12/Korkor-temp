@@ -1,15 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt, Plus } from "lucide-react";
+import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt, Plus, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { products } from "@/data/mockData";
 import { distributorFeedItems } from "@/data/distributors";
 import { useExpenses } from "@/contexts/ExpensesContext";
+import { useCart } from "@/contexts/CartContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
   const { businessName } = useAuth();
   const { getTodaysExpenses } = useExpenses();
+  const { activeOrderCount } = useCart();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -113,7 +115,7 @@ const OwnerDashboard = () => {
         )}
 
         {/* Restock Alerts */}
-        <button onClick={() => navigate("/owner/restock")} className="w-full bg-card rounded-lg p-4 mb-4 border border-border flex items-center justify-between">
+        <button onClick={() => navigate("/owner/restock")} className="w-full bg-card rounded-lg p-4 mb-3 border border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
               <Package className="w-5 h-5 text-warning" />
@@ -126,6 +128,24 @@ const OwnerDashboard = () => {
           <span className="w-6 h-6 rounded-full bg-warning text-primary-foreground text-xs font-bold flex items-center justify-center">
             {restockItems.length}
           </span>
+        </button>
+
+        {/* My Orders */}
+        <button onClick={() => navigate("/owner/orders")} className="w-full bg-card rounded-lg p-4 mb-4 border border-border flex items-center justify-between active:opacity-80">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-primary" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-semibold text-foreground">My Orders</p>
+              <p className="text-xs text-muted-foreground">{activeOrderCount} active orders</p>
+            </div>
+          </div>
+          {activeOrderCount > 0 && (
+            <span className="min-w-6 h-6 px-2 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+              {activeOrderCount}
+            </span>
+          )}
         </button>
 
         {/* Revenue / Cost / Expenses Snapshot */}

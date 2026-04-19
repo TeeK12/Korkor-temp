@@ -4,7 +4,7 @@ import { ArrowLeft, MapPin, Package, UserPlus, Truck, ShoppingCart, Plus, Minus 
 import { distributors, DistributorProduct } from "@/data/distributors";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 import { useCart } from "@/contexts/CartContext";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { toast } from "sonner";
 
 const DistributorProfilePage = () => {
@@ -54,7 +54,8 @@ const DistributorProfilePage = () => {
       unitPrice: selectedProduct.price,
       quantity: qty,
       paymentType,
-      goodwillRepaymentDays: paymentType === "goodwill" ? selectedProduct.goodwillRepaymentDays : undefined,
+      goodwillSupported: !!selectedProduct.goodwillAvailable,
+      goodwillRepaymentDays: selectedProduct.goodwillAvailable ? selectedProduct.goodwillRepaymentDays : undefined,
     });
     toast.success(`${selectedProduct.name} added to cart`);
     setSelectedProduct(null);
@@ -160,100 +161,109 @@ const DistributorProfilePage = () => {
         </div>
       </div>
 
-      {/* Product modal */}
-      <Dialog open={!!selectedProduct} onOpenChange={(o) => !o && setSelectedProduct(null)}>
-        <DialogContent className="dark bg-card border-border max-w-[400px] p-0 gap-0">
+      {/* Product bottom sheet */}
+      <Sheet open={!!selectedProduct} onOpenChange={(o) => !o && setSelectedProduct(null)}>
+        <SheetContent
+          side="bottom"
+          className="dark bg-card border-border p-0 h-[85vh] rounded-t-2xl flex flex-col mx-auto max-w-[430px]"
+        >
           {selectedProduct && (
-            <div>
-              <div className="aspect-square bg-primary/10 flex items-center justify-center rounded-t-lg">
-                <Package className="w-20 h-20 text-primary" />
-              </div>
-              <div className="p-5 space-y-4">
-                <div>
-                  <h2 className="text-lg font-bold text-foreground">{selectedProduct.name}</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {selectedProduct.availableQty.toLocaleString()} available
-                  </p>
+            <>
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto overscroll-contain">
+                <div className="aspect-square bg-primary/10 flex items-center justify-center">
+                  <Package className="w-20 h-20 text-primary" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Price per unit</span>
-                  <span className="text-lg font-bold text-foreground">
-                    ₦{selectedProduct.price.toLocaleString()}
-                  </span>
-                </div>
-
-                {meetsFreeShipping && (
-                  <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/10">
-                    <Truck className="w-4 h-4 text-success" />
-                    <span className="text-xs text-success font-medium">Free shipping unlocked</span>
-                  </div>
-                )}
-
-                {/* Payment type */}
-                {selectedProduct.goodwillAvailable && (
+                <div className="p-5 space-y-4 pb-6">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-2 block">Payment type</label>
-                    <div className="flex gap-2">
+                    <h2 className="text-lg font-bold text-foreground">{selectedProduct.name}</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {selectedProduct.availableQty.toLocaleString()} available
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Price per unit</span>
+                    <span className="text-lg font-bold text-foreground">
+                      ₦{selectedProduct.price.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {meetsFreeShipping && (
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-success/10">
+                      <Truck className="w-4 h-4 text-success" />
+                      <span className="text-xs text-success font-medium">Free shipping unlocked</span>
+                    </div>
+                  )}
+
+                  {/* Payment type */}
+                  {selectedProduct.goodwillAvailable && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-2 block">Payment method</label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setPaymentType("cash")}
+                          className={`flex-1 py-2 rounded-lg text-xs font-medium border ${
+                            paymentType === "cash"
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-muted text-muted-foreground border-border"
+                          }`}
+                        >
+                          Pay Now
+                        </button>
+                        <button
+                          onClick={() => setPaymentType("goodwill")}
+                          className={`flex-1 py-2 rounded-lg text-xs font-medium border ${
+                            paymentType === "goodwill"
+                              ? "bg-warning text-background border-warning"
+                              : "bg-muted text-muted-foreground border-border"
+                          }`}
+                        >
+                          Goodwill
+                        </button>
+                      </div>
+                      {paymentType === "goodwill" && selectedProduct.goodwillRepaymentDays && (
+                        <p className="text-[10px] text-muted-foreground mt-1.5">
+                          Repay within {selectedProduct.goodwillRepaymentDays} days
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Quantity */}
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-2 block">Quantity</label>
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => setPaymentType("cash")}
-                        className={`flex-1 py-2 rounded-lg text-xs font-medium border ${
-                          paymentType === "cash"
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-muted text-muted-foreground border-border"
-                        }`}
+                        onClick={() => setQty(Math.max(1, qty - 1))}
+                        className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"
                       >
-                        Cash
+                        <Minus className="w-4 h-4 text-foreground" />
                       </button>
+                      <input
+                        type="number"
+                        value={qty}
+                        onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-foreground text-center text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                       <button
-                        onClick={() => setPaymentType("goodwill")}
-                        className={`flex-1 py-2 rounded-lg text-xs font-medium border ${
-                          paymentType === "goodwill"
-                            ? "bg-warning text-background border-warning"
-                            : "bg-muted text-muted-foreground border-border"
-                        }`}
+                        onClick={() => setQty(qty + 1)}
+                        className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"
                       >
-                        Goodwill
+                        <Plus className="w-4 h-4 text-foreground" />
                       </button>
                     </div>
-                    {paymentType === "goodwill" && selectedProduct.goodwillRepaymentDays && (
-                      <p className="text-[10px] text-muted-foreground mt-1.5">
-                        Repay within {selectedProduct.goodwillRepaymentDays} days
-                      </p>
-                    )}
                   </div>
-                )}
 
-                {/* Quantity */}
-                <div>
-                  <label className="text-xs text-muted-foreground mb-2 block">Quantity</label>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setQty(Math.max(1, qty - 1))}
-                      className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"
-                    >
-                      <Minus className="w-4 h-4 text-foreground" />
-                    </button>
-                    <input
-                      type="number"
-                      value={qty}
-                      onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-foreground text-center text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button
-                      onClick={() => setQty(qty + 1)}
-                      className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center"
-                    >
-                      <Plus className="w-4 h-4 text-foreground" />
-                    </button>
+                  {/* Subtotal */}
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <span className="text-sm text-muted-foreground">Subtotal</span>
+                    <span className="text-xl font-bold text-primary">₦{subtotal.toLocaleString()}</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Subtotal */}
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <span className="text-sm text-muted-foreground">Subtotal</span>
-                  <span className="text-xl font-bold text-primary">₦{subtotal.toLocaleString()}</span>
-                </div>
-
+              {/* Fixed Add to Cart at bottom */}
+              <div className="p-4 border-t border-border bg-card">
                 <button
                   onClick={handleAddToCart}
                   className="w-full h-12 rounded-lg bg-primary text-primary-foreground text-sm font-bold flex items-center justify-center gap-2"
@@ -262,10 +272,10 @@ const DistributorProfilePage = () => {
                   Add to Cart
                 </button>
               </div>
-            </div>
+            </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       <OwnerBottomNav />
     </div>
