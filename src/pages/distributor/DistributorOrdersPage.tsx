@@ -37,10 +37,14 @@ const DistributorOrdersPage = () => {
                       </div>
                     </div>
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded font-medium ${
+                      className={`text-[10px] px-2 py-0.5 rounded font-medium capitalize ${
                         o.status === "pending"
                           ? "bg-warning/10 text-warning"
                           : o.status === "confirmed"
+                          ? "bg-secondary/20 text-foreground"
+                          : o.status === "shipped"
+                          ? "bg-primary/10 text-primary"
+                          : o.status === "delivered"
                           ? "bg-success/10 text-success"
                           : "bg-critical/10 text-critical"
                       }`}
