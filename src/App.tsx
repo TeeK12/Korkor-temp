@@ -42,6 +42,8 @@ import PromiseTrackerPage from "./pages/owner/PromiseTrackerPage";
 import CartPage from "./pages/owner/CartPage";
 import CheckoutPage from "./pages/owner/CheckoutPage";
 import GoodwillDistributorsPage from "./pages/owner/GoodwillDistributorsPage";
+import OwnerOrdersPage from "./pages/owner/OwnerOrdersPage";
+import OwnerOrderDetailPage from "./pages/owner/OwnerOrderDetailPage";
 
 // Agent pages
 import AgentHomePage from "./pages/agent/AgentHomePage";
@@ -121,6 +123,8 @@ const App = () => (
                       <Route path="/owner/cart" element={<CartPage />} />
                       <Route path="/owner/checkout" element={<CheckoutPage />} />
                       <Route path="/owner/goodwill-distributors" element={<GoodwillDistributorsPage />} />
+                      <Route path="/owner/orders" element={<OwnerOrdersPage />} />
+                      <Route path="/owner/order/:id" element={<OwnerOrderDetailPage />} />
                       <Route path="/owner/notifications" element={<OwnerNotificationsPage />} />
                       <Route path="/owner/settings" element={<OwnerSettingsPage />} />
                       <Route path="/owner/expenses" element={<ExpensesHistoryPage />} />
