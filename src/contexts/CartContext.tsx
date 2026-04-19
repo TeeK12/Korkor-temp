@@ -11,6 +11,7 @@ export interface CartItem {
   unitPrice: number;
   quantity: number;
   paymentType: CartPaymentType;
+  goodwillSupported?: boolean;
   goodwillRepaymentDays?: number;
 }
 

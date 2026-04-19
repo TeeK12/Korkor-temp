@@ -48,8 +48,7 @@ const CartPage = () => {
                 </h3>
                 <div className="space-y-2">
                   {group.items.map((it) => {
-                    // Goodwill toggle only enabled for items where distributor offers it (we know if goodwillRepaymentDays exists or current type is goodwill)
-                    const goodwillSupported = !!it.goodwillRepaymentDays || it.paymentType === "goodwill";
+                    const goodwillSupported = !!it.goodwillSupported;
                     return (
                       <div
                         key={`${it.productId}-${it.paymentType}`}

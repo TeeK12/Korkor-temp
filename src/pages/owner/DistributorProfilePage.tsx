@@ -54,7 +54,8 @@ const DistributorProfilePage = () => {
       unitPrice: selectedProduct.price,
       quantity: qty,
       paymentType,
-      goodwillRepaymentDays: paymentType === "goodwill" ? selectedProduct.goodwillRepaymentDays : undefined,
+      goodwillSupported: !!selectedProduct.goodwillAvailable,
+      goodwillRepaymentDays: selectedProduct.goodwillAvailable ? selectedProduct.goodwillRepaymentDays : undefined,
     });
     toast.success(`${selectedProduct.name} added to cart`);
     setSelectedProduct(null);
