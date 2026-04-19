@@ -47,7 +47,7 @@ interface DistributorContextType extends DistributorState {
   setProfile: (data: Partial<DistributorState>) => void;
   addProduct: (p: Omit<DistributorOwnProduct, "id">) => void;
   removeProduct: (id: string) => void;
-  addIncomingOrder: (o: Omit<DistributorIncomingOrder, "status" | "date"> & { id?: string; date?: string }) => void;
+  addIncomingOrder: (o: Omit<DistributorIncomingOrder, "id" | "status" | "date"> & { id?: string; date?: string }) => void;
   setOrderStatus: (id: string, status: DistributorOrderStatus) => void;
 }
 
@@ -101,7 +101,7 @@ export const DistributorProvider = ({ children }: { children: ReactNode }) => {
   const removeProduct = (id: string) =>
     setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
 
-  const addIncomingOrder = (o: Omit<DistributorIncomingOrder, "status" | "date"> & { id?: string; date?: string }) =>
+  const addIncomingOrder = (o: Omit<DistributorIncomingOrder, "id" | "status" | "date"> & { id?: string; date?: string }) =>
     setState((s) => ({
       ...s,
       orders: [
