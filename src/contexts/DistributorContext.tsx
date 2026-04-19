@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
 
 export interface DistributorOwnProduct {
   id: string;
@@ -13,6 +13,8 @@ export interface DistributorOwnProduct {
   paymentMethods: string[];
 }
 
+export type DistributorOrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "declined";
+
 export interface DistributorIncomingOrder {
   id: string;
   date: string;
@@ -21,7 +23,10 @@ export interface DistributorIncomingOrder {
   buyerLocation: string;
   items: { productId: string; productName: string; qty: number; unitPrice: number; paymentType: "cash" | "goodwill" }[];
   paymentMethod: string;
-  status: "pending" | "confirmed" | "declined";
+  status: DistributorOrderStatus;
+  confirmedAt?: string;
+  shippedAt?: string;
+  deliveredAt?: string;
 }
 
 interface DistributorState {
@@ -42,8 +47,8 @@ interface DistributorContextType extends DistributorState {
   setProfile: (data: Partial<DistributorState>) => void;
   addProduct: (p: Omit<DistributorOwnProduct, "id">) => void;
   removeProduct: (id: string) => void;
-  addIncomingOrder: (o: Omit<DistributorIncomingOrder, "id" | "status" | "date">) => void;
-  setOrderStatus: (id: string, status: "confirmed" | "declined") => void;
+  addIncomingOrder: (o: Omit<DistributorIncomingOrder, "status" | "date"> & { id?: string; date?: string }) => void;
+  setOrderStatus: (id: string, status: DistributorOrderStatus) => void;
 }
 
 const seedProducts: DistributorOwnProduct[] = [
@@ -96,17 +101,36 @@ export const DistributorProvider = ({ children }: { children: ReactNode }) => {
   const removeProduct = (id: string) =>
     setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
 
-  const addIncomingOrder = (o: Omit<DistributorIncomingOrder, "id" | "status" | "date">) =>
+  const addIncomingOrder = (o: Omit<DistributorIncomingOrder, "status" | "date"> & { id?: string; date?: string }) =>
     setState((s) => ({
       ...s,
       orders: [
-        { ...o, id: `io-${Date.now()}`, status: "pending", date: new Date().toISOString() },
+        {
+          ...o,
+          id: o.id ?? `io-${Date.now()}`,
+          status: "pending",
+          date: o.date ?? new Date().toISOString(),
+        } as DistributorIncomingOrder,
         ...s.orders,
       ],
     }));
 
-  const setOrderStatus = (id: string, status: "confirmed" | "declined") =>
-    setState((s) => ({ ...s, orders: s.orders.map((o) => (o.id === id ? { ...o, status } : o)) }));
+  const setOrderStatus = useCallback((id: string, status: DistributorOrderStatus) => {
+    setState((s) => ({
+      ...s,
+      orders: s.orders.map((o) => {
+        if (o.id !== id) return o;
+        const stamp = new Date().toISOString();
+        return {
+          ...o,
+          status,
+          confirmedAt: status === "confirmed" ? stamp : o.confirmedAt,
+          shippedAt: status === "shipped" ? stamp : o.shippedAt,
+          deliveredAt: status === "delivered" ? stamp : o.deliveredAt,
+        };
+      }),
+    }));
+  }, []);
 
   return (
     <DistributorContext.Provider value={{ ...state, setProfile, addProduct, removeProduct, addIncomingOrder, setOrderStatus }}>
