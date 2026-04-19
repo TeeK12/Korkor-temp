@@ -23,13 +23,17 @@ const CheckoutPage = () => {
 
   const handlePlaceOrder = () => {
     if (items.length === 0) return;
-    // Add a corresponding incoming order to the distributor side (mock)
-    Object.entries(grouped).forEach(([, group]) => {
+    const buyer = businessName || "Mama Nkechi Provisions";
+    const newOrders = placeOrder(paymentMethod, buyer);
+    // Mirror each order to the distributor side using SAME id so status syncs
+    newOrders.forEach((o) => {
       addIncomingOrder({
+        id: o.id,
+        date: o.date,
         buyerId: "owner-current",
-        buyerName: businessName || "Mama Nkechi Provisions",
+        buyerName: buyer,
         buyerLocation: "Alaba, Lagos",
-        items: group.items.map((it) => ({
+        items: o.items.map((it) => ({
           productId: it.productId,
           productName: it.productName,
           qty: it.quantity,
@@ -39,9 +43,8 @@ const CheckoutPage = () => {
         paymentMethod,
       });
     });
-    placeOrder(paymentMethod, businessName || "Owner");
     toast.success("Your order is on the way. Distributors have been notified.");
-    navigate("/owner");
+    navigate("/owner/orders");
   };
 
   return (
@@ -68,11 +71,15 @@ const CheckoutPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-foreground">{it.productName}</span>
-                        {it.paymentType === "goodwill" && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/10 text-warning font-medium">
-                            Goodwill
-                          </span>
-                        )}
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                            it.paymentType === "goodwill"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {it.paymentType === "goodwill" ? "Goodwill" : "Pay Now"}
+                        </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {it.quantity} × ₦{it.unitPrice.toLocaleString()}
@@ -90,18 +97,18 @@ const CheckoutPage = () => {
 
         {/* Totals */}
         <div className="bg-card rounded-lg p-4 border border-border mb-6 space-y-3">
-          <div className="flex items-center justify-between text-sm opacity-60">
+          <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Grand Total</span>
             <span className="text-foreground font-semibold">₦{grandTotal.toLocaleString()}</span>
           </div>
           {goodwillTotal > 0 && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-warning">Goodwill Total (To be repaid)</span>
+              <span className="text-warning">Goodwill Amount (To be repaid later)</span>
               <span className="text-warning font-semibold">₦{goodwillTotal.toLocaleString()}</span>
             </div>
           )}
           <div className="flex items-center justify-between pt-3 border-t border-border">
-            <span className="text-sm text-foreground font-semibold">Subtotal (Payable Now)</span>
+            <span className="text-sm text-foreground font-semibold">Subtotal / Cash Payable</span>
             <span className="text-2xl font-bold text-primary">₦{cashTotal.toLocaleString()}</span>
           </div>
         </div>

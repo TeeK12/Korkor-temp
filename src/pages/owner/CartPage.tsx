@@ -5,7 +5,7 @@ import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const CartPage = () => {
   const navigate = useNavigate();
-  const { items, updateQuantity, removeItem, grandTotal } = useCart();
+  const { items, updateQuantity, removeItem, updateItemPaymentType, grandTotal, cashTotal, goodwillTotal } = useCart();
 
   // Group by distributor
   const grouped = items.reduce((acc, item) => {
@@ -47,69 +47,103 @@ const CartPage = () => {
                   {group.name}
                 </h3>
                 <div className="space-y-2">
-                  {group.items.map((it) => (
-                    <div
-                      key={`${it.productId}-${it.paymentType}`}
-                      className="bg-card rounded-lg p-4 border border-border"
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-foreground">{it.productName}</p>
-                          <div className="flex items-center gap-2 mt-1">
+                  {group.items.map((it) => {
+                    // Goodwill toggle only enabled for items where distributor offers it (we know if goodwillRepaymentDays exists or current type is goodwill)
+                    const goodwillSupported = !!it.goodwillRepaymentDays || it.paymentType === "goodwill";
+                    return (
+                      <div
+                        key={`${it.productId}-${it.paymentType}`}
+                        className="bg-card rounded-lg p-4 border border-border"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">{it.productName}</p>
                             <span className="text-xs text-muted-foreground">
                               ₦{it.unitPrice.toLocaleString()} / unit
                             </span>
-                            {it.paymentType === "goodwill" && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-warning/10 text-warning font-medium">
-                                Goodwill
-                              </span>
-                            )}
                           </div>
-                        </div>
-                        <button
-                          onClick={() => removeItem(it.productId, it.paymentType)}
-                          className="text-muted-foreground"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() =>
-                              updateQuantity(it.productId, it.paymentType, it.quantity - 1)
-                            }
-                            className="w-7 h-7 rounded-md bg-muted flex items-center justify-center"
+                            onClick={() => removeItem(it.productId, it.paymentType)}
+                            className="text-muted-foreground"
                           >
-                            <Minus className="w-3 h-3 text-foreground" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                          <span className="text-sm font-medium text-foreground min-w-[20px] text-center">
-                            {it.quantity}
+                        </div>
+
+                        {/* Payment method selector */}
+                        {goodwillSupported && (
+                          <div className="flex gap-2 mb-3">
+                            <button
+                              onClick={() => updateItemPaymentType(it.productId, it.paymentType, "cash")}
+                              className={`flex-1 py-1.5 rounded-md text-[11px] font-medium border ${
+                                it.paymentType === "cash"
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-muted text-muted-foreground border-border"
+                              }`}
+                            >
+                              Pay Now
+                            </button>
+                            <button
+                              onClick={() => updateItemPaymentType(it.productId, it.paymentType, "goodwill")}
+                              className={`flex-1 py-1.5 rounded-md text-[11px] font-medium border ${
+                                it.paymentType === "goodwill"
+                                  ? "bg-warning text-background border-warning"
+                                  : "bg-muted text-muted-foreground border-border"
+                              }`}
+                            >
+                              Goodwill
+                            </button>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                updateQuantity(it.productId, it.paymentType, it.quantity - 1)
+                              }
+                              className="w-7 h-7 rounded-md bg-muted flex items-center justify-center"
+                            >
+                              <Minus className="w-3 h-3 text-foreground" />
+                            </button>
+                            <span className="text-sm font-medium text-foreground min-w-[20px] text-center">
+                              {it.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateQuantity(it.productId, it.paymentType, it.quantity + 1)
+                              }
+                              className="w-7 h-7 rounded-md bg-muted flex items-center justify-center"
+                            >
+                              <Plus className="w-3 h-3 text-foreground" />
+                            </button>
+                          </div>
+                          <span className="text-sm font-bold text-foreground">
+                            ₦{(it.unitPrice * it.quantity).toLocaleString()}
                           </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(it.productId, it.paymentType, it.quantity + 1)
-                            }
-                            className="w-7 h-7 rounded-md bg-muted flex items-center justify-center"
-                          >
-                            <Plus className="w-3 h-3 text-foreground" />
-                          </button>
                         </div>
-                        <span className="text-sm font-bold text-foreground">
-                          ₦{(it.unitPrice * it.quantity).toLocaleString()}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ))}
 
-            {/* Grand total */}
-            <div className="bg-card rounded-lg p-4 border border-border mb-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Grand Total</span>
-                <span className="text-2xl font-bold text-foreground">₦{grandTotal.toLocaleString()}</span>
+            {/* Totals breakdown */}
+            <div className="bg-card rounded-lg p-4 border border-border mb-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Grand Total</span>
+                <span className="text-foreground font-semibold">₦{grandTotal.toLocaleString()}</span>
+              </div>
+              {goodwillTotal > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-warning">Goodwill (deferred)</span>
+                  <span className="text-warning font-semibold">₦{goodwillTotal.toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-border">
+                <span className="text-sm text-foreground font-semibold">Cash Payable Now</span>
+                <span className="text-2xl font-bold text-primary">₦{cashTotal.toLocaleString()}</span>
               </div>
             </div>
 
