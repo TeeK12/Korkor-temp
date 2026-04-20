@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Pencil, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDistributor } from "@/contexts/DistributorContext";
 import DistributorBottomNav from "@/components/DistributorBottomNav";
@@ -9,40 +10,39 @@ const DistributorSettingsPage = () => {
   const navigate = useNavigate();
   const { logout, businessName, userName } = useAuth();
   const { autoApproveGoodwill, defaultGoodwillDays, setProfile } = useDistributor();
+  const [editingRepayment, setEditingRepayment] = useState(false);
+  const [draftRepayment, setDraftRepayment] = useState<string>(defaultGoodwillDays.toString());
+  const [customMode, setCustomMode] = useState(false);
 
-  const sections = [
-    {
-      title: "Account",
-      items: [
-        { label: "Business Profile", action: () => navigate("/distributor/profile") },
-        { label: "Phone & Password", action: () => toast.info("Coming soon") },
-      ],
-    },
-    {
-      title: "Goodwill Settings",
-      items: [
-        {
-          label: `Default repayment period: ${defaultGoodwillDays} days`,
-          action: () => {
-            const next = defaultGoodwillDays === 30 ? 60 : defaultGoodwillDays === 60 ? 90 : 30;
-            setProfile({ defaultGoodwillDays: next });
-            toast.success(`Repayment period set to ${next} days`);
-          },
-        },
-        {
-          label: autoApproveGoodwill ? "Auto-approve goodwill orders: ON" : "Auto-approve goodwill orders: OFF",
-          action: () => setProfile({ autoApproveGoodwill: !autoApproveGoodwill }),
-        },
-      ],
-    },
-    {
-      title: "Other",
-      items: [
-        { label: "Notification preferences", action: () => toast.info("Coming soon") },
-        { label: "About Bulkbook", action: () => toast.info("Bulkbook v1.0") },
-      ],
-    },
-  ];
+  const saveRepayment = () => {
+    const next = parseInt(draftRepayment);
+    if (!next || next <= 0) {
+      toast.error("Enter a valid number of days");
+      return;
+    }
+    setProfile({ defaultGoodwillDays: next });
+    setEditingRepayment(false);
+    setCustomMode(false);
+    toast.success(`Repayment period set to ${next} days`);
+  };
+
+  const accountSection = {
+    title: "Account",
+    items: [
+      { label: "Business Profile", action: () => navigate("/distributor/profile") },
+      { label: "Phone & Password", action: () => toast.info("Coming soon") },
+    ],
+  };
+
+  const otherSection = {
+    title: "Other",
+    items: [
+      { label: "Notification preferences", action: () => toast.info("Coming soon") },
+      { label: "About Bulkbook", action: () => toast.info("Bulkbook v1.0") },
+    ],
+  };
+
+  const presetMatch = [30, 60, 90].includes(parseInt(draftRepayment));
 
   return (
     <div className="app-shell dark bg-background">
@@ -65,27 +65,124 @@ const DistributorSettingsPage = () => {
           </div>
         </div>
 
-        {sections.map((section) => (
-          <div key={section.title} className="mb-6">
-            <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">
-              {section.title}
-            </h3>
-            <div className="bg-card rounded-lg border border-border overflow-hidden">
-              {section.items.map((item, idx) => (
-                <button
-                  key={idx}
-                  onClick={item.action}
-                  className={`w-full flex items-center justify-between p-4 active:opacity-70 ${
-                    idx > 0 ? "border-t border-border" : ""
-                  }`}
-                >
-                  <span className="text-sm text-foreground text-left">{item.label}</span>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              ))}
-            </div>
+        {/* Account */}
+        <div className="mb-6">
+          <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">
+            {accountSection.title}
+          </h3>
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            {accountSection.items.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={item.action}
+                className={`w-full flex items-center justify-between p-4 active:opacity-70 ${
+                  idx > 0 ? "border-t border-border" : ""
+                }`}
+              >
+                <span className="text-sm text-foreground text-left">{item.label}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Goodwill Settings */}
+        <div className="mb-6">
+          <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">
+            Goodwill Settings
+          </h3>
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            {/* Repayment period — view + edit */}
+            <div className="p-4">
+              <p className="text-xs text-muted-foreground mb-1">Default repayment period</p>
+              {editingRepayment ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={customMode || !presetMatch ? "custom" : draftRepayment}
+                      onChange={(e) => {
+                        if (e.target.value === "custom") {
+                          setCustomMode(true);
+                        } else {
+                          setCustomMode(false);
+                          setDraftRepayment(e.target.value);
+                        }
+                      }}
+                      className="flex-1 h-10 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="30">30 days</option>
+                      <option value="60">60 days</option>
+                      <option value="90">90 days</option>
+                      <option value="custom">Custom…</option>
+                    </select>
+                    <button
+                      onClick={saveRepayment}
+                      className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center"
+                      aria-label="Save"
+                    >
+                      <Check className="w-4 h-4 text-primary-foreground" />
+                    </button>
+                  </div>
+                  {(customMode || !presetMatch) && (
+                    <input
+                      type="number"
+                      value={draftRepayment}
+                      onChange={(e) => setDraftRepayment(e.target.value)}
+                      placeholder="Days"
+                      className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-foreground">{defaultGoodwillDays} days</span>
+                  <button
+                    onClick={() => {
+                      setDraftRepayment(defaultGoodwillDays.toString());
+                      setCustomMode(![30, 60, 90].includes(defaultGoodwillDays));
+                      setEditingRepayment(true);
+                    }}
+                    className="flex items-center gap-1 text-xs text-primary font-medium px-2 py-1 rounded hover:bg-primary/10"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Auto-approve */}
+            <button
+              onClick={() => setProfile({ autoApproveGoodwill: !autoApproveGoodwill })}
+              className="w-full flex items-center justify-between p-4 border-t border-border active:opacity-70"
+            >
+              <span className="text-sm text-foreground text-left">
+                {autoApproveGoodwill ? "Auto-approve goodwill orders: ON" : "Auto-approve goodwill orders: OFF"}
+              </span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
+        {/* Other */}
+        <div className="mb-6">
+          <h3 className="text-xs uppercase tracking-wide text-muted-foreground font-semibold mb-2">
+            {otherSection.title}
+          </h3>
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            {otherSection.items.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={item.action}
+                className={`w-full flex items-center justify-between p-4 active:opacity-70 ${
+                  idx > 0 ? "border-t border-border" : ""
+                }`}
+              >
+                <span className="text-sm text-foreground text-left">{item.label}</span>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+        </div>
 
         <button
           onClick={() => {

@@ -53,7 +53,10 @@ const DistributorDashboard = () => {
         </div>
 
         {/* Health Score */}
-        <div className="bg-card rounded-lg p-4 mb-4 border border-border cursor-pointer active:opacity-80">
+        <button
+          onClick={() => navigate("/distributor/health")}
+          className="w-full text-left bg-card rounded-lg p-4 mb-4 border border-border active:opacity-80"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground font-medium">Business Health Score</span>
             <Zap className="w-4 h-4 text-warning" />
@@ -68,7 +71,7 @@ const DistributorDashboard = () => {
               style={{ width: `${score}%` }}
             />
           </div>
-        </div>
+        </button>
 
         {/* AI Brief */}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">

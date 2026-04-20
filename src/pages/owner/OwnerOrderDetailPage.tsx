@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, Truck, PackageCheck, Clock } from "lucide-react";
 import { useCart, OrderStatus } from "@/contexts/CartContext";
 import { useDistributor } from "@/contexts/DistributorContext";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const STEPS: { key: OrderStatus; label: string; icon: typeof Clock }[] = [
   { key: "pending", label: "Order Placed", icon: Clock },
@@ -16,6 +27,7 @@ const OwnerOrderDetailPage = () => {
   const { id } = useParams();
   const { orders, updateOrderStatus } = useCart();
   const { setOrderStatus: setDistOrderStatus } = useDistributor();
+  const [confirmDeliveredOpen, setConfirmDeliveredOpen] = useState(false);
   const order = orders.find((o) => o.id === id);
 
   if (!order) {

@@ -19,7 +19,11 @@ const DistributorInventoryPage = () => {
             </div>
           ) : (
             products.map((p) => (
-              <div key={p.id} className="bg-card rounded-lg p-4 border border-border">
+              <button
+                key={p.id}
+                onClick={() => navigate(`/distributor/inventory/${p.id}`)}
+                className="w-full bg-card rounded-lg p-4 border border-border text-left active:opacity-80"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <Package className="w-5 h-5 text-primary" />
@@ -51,7 +55,7 @@ const DistributorInventoryPage = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
