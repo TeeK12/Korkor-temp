@@ -51,11 +51,13 @@ const DistributorGoodwillConditionsPage = () => {
       : undefined;
 
     // Pass back via location state — return to caller with data
-    navigate(state.returnTo || -1, {
-      state: {
-        goodwillResult: { enabled, conditions },
-      },
-    });
+    if (state.returnTo) {
+      navigate(state.returnTo, {
+        state: { goodwillResult: { enabled, conditions } },
+      });
+    } else {
+      navigate(-1);
+    }
   };
 
   return (
