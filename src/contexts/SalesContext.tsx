@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 
 export type PaymentMethod = "cash" | "card" | "transfer" | "promise";
 
+export interface PromiseDeposit {
+  amount: number;
+  date: string; // ISO
+}
+
 export interface SaleRecord {
   id: string;
   items: { productId: string; name: string; qty: number; price: number; unit: string }[];
@@ -13,12 +18,16 @@ export interface SaleRecord {
   role: "owner" | "agent";
   promisePaid?: boolean;
   promisePaidDate?: string;
+  deposits?: PromiseDeposit[];
 }
 
 interface SalesContextType {
   sales: SaleRecord[];
   addSale: (sale: Omit<SaleRecord, "id">) => void;
   markPromisePaid: (id: string) => void;
+  recordPromiseDeposit: (id: string, amount: number) => void;
+  getOutstanding: (s: SaleRecord) => number;
+  getDepositsTotal: (s: SaleRecord) => number;
   getCashInHand: () => number;
   getCashInPromise: () => number;
   getPromiseSales: () => SaleRecord[];
@@ -43,6 +52,9 @@ const initialSales: SaleRecord[] = [
   { id: "s5", items: [{ productId: "1", name: "Indomie Chicken (70g)", qty: 10, price: 220, unit: "pack" }], total: 2200, paymentMethod: "promise", customerNote: "Oga Emeka - next week", date: new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0], recordedBy: "owner", role: "owner" },
 ];
 
+const depositsTotal = (s: SaleRecord) => (s.deposits ?? []).reduce((sum, d) => sum + d.amount, 0);
+const outstanding = (s: SaleRecord) => Math.max(0, s.total - depositsTotal(s));
+
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<SaleRecord[]>(initialSales);
 
@@ -59,21 +71,61 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const getCashInHand = () =>
-    sales
-      .filter((s) => ["cash", "card", "transfer"].includes(s.paymentMethod) || s.promisePaid)
-      .reduce((sum, s) => sum + s.total, 0);
+  const recordPromiseDeposit = (id: string, amount: number) => {
+    if (amount <= 0) return;
+    setSales((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const newDeposits = [...(s.deposits ?? []), { amount, date: new Date().toISOString() }];
+        const remaining = s.total - newDeposits.reduce((sum, d) => sum + d.amount, 0);
+        if (remaining <= 0) {
+          return {
+            ...s,
+            deposits: newDeposits,
+            promisePaid: true,
+            promisePaidDate: new Date().toISOString().split("T")[0],
+          };
+        }
+        return { ...s, deposits: newDeposits };
+      })
+    );
+  };
+
+  const getCashInHand = () => {
+    let total = 0;
+    for (const s of sales) {
+      if (["cash", "card", "transfer"].includes(s.paymentMethod)) {
+        total += s.total;
+      } else if (s.paymentMethod === "promise") {
+        if (s.promisePaid) total += s.total;
+        else total += depositsTotal(s);
+      }
+    }
+    return total;
+  };
 
   const getCashInPromise = () =>
     sales
       .filter((s) => s.paymentMethod === "promise" && !s.promisePaid)
-      .reduce((sum, s) => sum + s.total, 0);
+      .reduce((sum, s) => sum + outstanding(s), 0);
 
   const getPromiseSales = () =>
     sales.filter((s) => s.paymentMethod === "promise" && !s.promisePaid);
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, markPromisePaid, getCashInHand, getCashInPromise, getPromiseSales }}>
+    <SalesContext.Provider
+      value={{
+        sales,
+        addSale,
+        markPromisePaid,
+        recordPromiseDeposit,
+        getOutstanding: outstanding,
+        getDepositsTotal: depositsTotal,
+        getCashInHand,
+        getCashInPromise,
+        getPromiseSales,
+      }}
+    >
       {children}
     </SalesContext.Provider>
   );

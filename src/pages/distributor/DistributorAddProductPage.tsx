@@ -1,37 +1,120 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { useDistributor } from "@/contexts/DistributorContext";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ArrowLeft, Plus, Check } from "lucide-react";
+import { useDistributor, GoodwillConditions } from "@/contexts/DistributorContext";
 import { toast } from "sonner";
 
-const CATEGORIES = ["Dairy", "Beverages", "Grains", "Provisions", "Cosmetics", "Electronics", "Building Materials", "Other"];
+const BASE_CATEGORIES = ["Dairy", "Beverages", "Grains", "Provisions", "Cosmetics", "Electronics", "Building Materials"];
 const PAYMENT_OPTS = ["Cash", "Bank Transfer", "Online Payment", "Goodwill"];
+
+interface FormState {
+  name: string;
+  category: string;
+  costPrice: string;
+  sellingPrice: string;
+  currentStock: string;
+  freeShippingThreshold: string;
+  goodwillEnabled: boolean;
+  goodwillConditions?: GoodwillConditions;
+}
+
+const STORAGE_KEY = "distributor-addproduct-draft";
 
 const DistributorAddProductPage = () => {
   const navigate = useNavigate();
-  const { addProduct } = useDistributor();
-  const [form, setForm] = useState({
-    name: "",
-    category: "",
-    costPrice: "",
-    sellingPrice: "",
-    currentStock: "",
-    freeShippingThreshold: "",
-    goodwillEnabled: false,
-    goodwillRepaymentDays: "30",
-  });
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(["Cash", "Bank Transfer"]);
+  const location = useLocation();
+  const { id } = useParams();
+  const { products, addProduct, updateProduct, customCategories, addCustomCategory } = useDistributor();
+  const isEdit = !!id;
+  const existing = isEdit ? products.find((p) => p.id === id) : undefined;
 
-  const update = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const restoredDraft = (() => {
+    if (isEdit) return null;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const [form, setForm] = useState<FormState>(
+    restoredDraft ?? {
+      name: existing?.name ?? "",
+      category: existing?.category ?? "",
+      costPrice: existing?.costPrice?.toString() ?? "",
+      sellingPrice: existing?.sellingPrice?.toString() ?? "",
+      currentStock: existing?.currentStock?.toString() ?? "",
+      freeShippingThreshold: existing?.freeShippingThreshold?.toString() ?? "",
+      goodwillEnabled: existing?.goodwillEnabled ?? false,
+      goodwillConditions:
+        existing?.goodwillConditions ??
+        (existing?.goodwillEnabled && existing?.goodwillRepaymentDays
+          ? { repaymentDays: existing.goodwillRepaymentDays }
+          : undefined),
+    }
+  );
+
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(
+    restoredDraft?.paymentMethods ?? existing?.paymentMethods ?? ["Cash", "Bank Transfer"]
+  );
+  const [showAddCat, setShowAddCat] = useState(false);
+  const [newCat, setNewCat] = useState("");
+
+  // Receive goodwill result from sub-page
+  useEffect(() => {
+    const result = (location.state as any)?.goodwillResult;
+    if (result) {
+      setForm((p) => ({
+        ...p,
+        goodwillEnabled: result.enabled,
+        goodwillConditions: result.conditions,
+      }));
+      // Clear so re-renders don't re-apply
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+
+  // Persist draft so it survives navigation to goodwill page (only when adding new)
+  useEffect(() => {
+    if (isEdit) return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ ...form, paymentMethods }));
+    } catch {
+      // ignore
+    }
+  }, [form, paymentMethods, isEdit]);
+
+  const allCategories = [...BASE_CATEGORIES, ...customCategories];
+
+  const update = (k: keyof FormState, v: any) => setForm((p) => ({ ...p, [k]: v }));
   const togglePm = (m: string) =>
     setPaymentMethods((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
+
+  const submitNewCat = () => {
+    const t = newCat.trim();
+    if (!t) return;
+    addCustomCategory(t);
+    update("category", t);
+    setNewCat("");
+    setShowAddCat(false);
+  };
+
+  const openGoodwillPage = () => {
+    navigate("/distributor/inventory/goodwill-conditions", {
+      state: {
+        initial: { enabled: form.goodwillEnabled, conditions: form.goodwillConditions },
+        returnTo: isEdit ? `/distributor/inventory/edit/${id}` : "/distributor/inventory/add",
+      },
+    });
+  };
 
   const handleSave = () => {
     if (!form.name || !form.category || !form.costPrice || !form.sellingPrice || !form.currentStock) {
       toast.error("Fill in required fields");
       return;
     }
-    addProduct({
+    const payload = {
       name: form.name,
       category: form.category,
       costPrice: parseFloat(form.costPrice),
@@ -39,12 +122,33 @@ const DistributorAddProductPage = () => {
       currentStock: parseInt(form.currentStock),
       freeShippingThreshold: form.freeShippingThreshold ? parseFloat(form.freeShippingThreshold) : undefined,
       goodwillEnabled: form.goodwillEnabled,
-      goodwillRepaymentDays: form.goodwillEnabled ? parseInt(form.goodwillRepaymentDays) : undefined,
+      goodwillRepaymentDays: form.goodwillEnabled ? form.goodwillConditions?.repaymentDays : undefined,
+      goodwillConditions: form.goodwillEnabled ? form.goodwillConditions : undefined,
       paymentMethods,
-    });
-    toast.success("Product added");
-    navigate("/distributor/inventory");
+    };
+
+    if (isEdit && id) {
+      updateProduct(id, payload);
+      toast.success("Product updated");
+      navigate(`/distributor/inventory/${id}`);
+    } else {
+      addProduct(payload);
+      toast.success("Product added");
+      sessionStorage.removeItem(STORAGE_KEY);
+      navigate("/distributor/inventory");
+    }
   };
+
+  // Goodwill summary text
+  const goodwillSummary = (() => {
+    if (!form.goodwillEnabled) return "Not enabled";
+    const c = form.goodwillConditions;
+    if (!c) return "Enabled";
+    const parts: string[] = [`${c.repaymentDays}d repayment`];
+    if (c.minMonthsOnBulkbook != null) parts.push(`${c.minMonthsOnBulkbook}+ months`);
+    if (c.minOrderValue != null) parts.push(`min ₦${c.minOrderValue.toLocaleString()} order`);
+    return `Enabled — ${parts.join(", ")}`;
+  })();
 
   return (
     <div className="app-shell dark bg-background">
@@ -54,7 +158,7 @@ const DistributorAddProductPage = () => {
           <span className="text-sm">Back</span>
         </button>
 
-        <h1 className="text-2xl font-bold text-foreground mb-6">Add Product</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">{isEdit ? "Edit Product" : "Add Product"}</h1>
 
         <div className="space-y-4">
           <div>
@@ -69,8 +173,8 @@ const DistributorAddProductPage = () => {
 
           <div>
             <label className="text-sm font-medium text-foreground block mb-2">Category</label>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORIES.map((c) => (
+            <div className="flex flex-wrap gap-2 items-center">
+              {allCategories.map((c) => (
                 <button
                   key={c}
                   onClick={() => update("category", c)}
@@ -83,6 +187,38 @@ const DistributorAddProductPage = () => {
                   {c}
                 </button>
               ))}
+              {showAddCat ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    autoFocus
+                    value={newCat}
+                    onChange={(e) => setNewCat(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") submitNewCat();
+                      if (e.key === "Escape") {
+                        setShowAddCat(false);
+                        setNewCat("");
+                      }
+                    }}
+                    placeholder="Category"
+                    className="h-7 px-2 rounded-full border border-primary bg-background text-foreground text-xs w-24 focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    onClick={submitNewCat}
+                    className="w-7 h-7 rounded-full bg-primary flex items-center justify-center"
+                  >
+                    <Check className="w-3.5 h-3.5 text-primary-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAddCat(true)}
+                  className="w-7 h-7 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground"
+                  aria-label="Add category"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -117,7 +253,6 @@ const DistributorAddProductPage = () => {
             />
           </div>
 
-          {/* Free shipping */}
           <div>
             <label className="text-sm font-medium text-foreground block mb-1.5">
               Free shipping on orders above (optional)
@@ -131,41 +266,19 @@ const DistributorAddProductPage = () => {
             />
           </div>
 
-          {/* Goodwill */}
-          <div className="bg-card rounded-lg p-4 border border-border">
-            <div className="flex items-center justify-between mb-2">
+          {/* Goodwill conditions card */}
+          <button
+            onClick={openGoodwillPage}
+            className="w-full bg-card rounded-lg p-4 border border-border text-left active:opacity-80"
+          >
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">Buy Now Pay Later (Goodwill)</p>
-                <p className="text-xs text-muted-foreground">Allow buyers to pay after selling</p>
+                <p className="text-sm font-semibold text-foreground">Buy Now Pay Later (Goodwill)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{goodwillSummary}</p>
               </div>
-              <button
-                onClick={() => update("goodwillEnabled", !form.goodwillEnabled)}
-                className={`relative w-11 h-6 rounded-full transition-colors ${
-                  form.goodwillEnabled ? "bg-primary" : "bg-muted"
-                }`}
-              >
-                <div
-                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-background transition-transform ${
-                    form.goodwillEnabled ? "translate-x-5" : "translate-x-0.5"
-                  }`}
-                />
-              </button>
+              <span className="text-xs text-primary">Configure →</span>
             </div>
-            {form.goodwillEnabled && (
-              <div className="mt-3">
-                <label className="text-xs text-muted-foreground block mb-1.5">Repayment period</label>
-                <select
-                  value={form.goodwillRepaymentDays}
-                  onChange={(e) => update("goodwillRepaymentDays", e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="30">30 days</option>
-                  <option value="60">60 days</option>
-                  <option value="90">90 days</option>
-                </select>
-              </div>
-            )}
-          </div>
+          </button>
 
           {/* Payment methods */}
           <div>
@@ -191,7 +304,7 @@ const DistributorAddProductPage = () => {
             onClick={handleSave}
             className="w-full h-12 mt-4 rounded-lg bg-primary text-primary-foreground font-semibold text-sm"
           >
-            Save Product
+            {isEdit ? "Save Changes" : "Save Product"}
           </button>
         </div>
       </div>

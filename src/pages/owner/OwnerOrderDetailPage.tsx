@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Check, Truck, PackageCheck, Clock } from "lucide-react";
 import { useCart, OrderStatus } from "@/contexts/CartContext";
 import { useDistributor } from "@/contexts/DistributorContext";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const STEPS: { key: OrderStatus; label: string; icon: typeof Clock }[] = [
   { key: "pending", label: "Order Placed", icon: Clock },
@@ -16,6 +27,7 @@ const OwnerOrderDetailPage = () => {
   const { id } = useParams();
   const { orders, updateOrderStatus } = useCart();
   const { setOrderStatus: setDistOrderStatus } = useDistributor();
+  const [confirmDeliveredOpen, setConfirmDeliveredOpen] = useState(false);
   const order = orders.find((o) => o.id === id);
 
   if (!order) {
@@ -75,15 +87,30 @@ const OwnerOrderDetailPage = () => {
                 const Icon = s.icon;
                 const reached = idx <= stepIndex;
                 const isCurrent = idx === stepIndex;
-                return (
-                  <div key={s.key} className="flex items-center gap-3">
+                const isDeliveredStep = s.key === "delivered";
+                const canTapDelivered = isDeliveredStep && order.status === "shipped";
+                const stepTimestamp =
+                  s.key === "pending"
+                    ? order.date
+                    : s.key === "confirmed"
+                      ? order.confirmedAt
+                      : s.key === "shipped"
+                        ? order.shippedAt
+                        : order.deliveredAt;
+
+                const content = (
+                  <>
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                         reached
-                          ? isCurrent
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-success/20 text-success"
-                          : "bg-muted text-muted-foreground"
+                          ? isDeliveredStep && order.status === "delivered"
+                            ? "bg-success text-background"
+                            : isCurrent
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-success/20 text-success"
+                          : canTapDelivered
+                            ? "bg-primary/15 text-primary border border-primary border-dashed"
+                            : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -91,12 +118,44 @@ const OwnerOrderDetailPage = () => {
                     <div className="flex-1">
                       <p
                         className={`text-sm font-medium capitalize ${
-                          isCurrent ? "text-primary" : reached ? "text-foreground" : "text-muted-foreground"
+                          isDeliveredStep && order.status === "delivered"
+                            ? "text-success"
+                            : isCurrent
+                              ? "text-primary"
+                              : reached
+                                ? "text-foreground"
+                                : canTapDelivered
+                                  ? "text-primary"
+                                  : "text-muted-foreground"
                         }`}
                       >
                         {s.label}
+                        {canTapDelivered && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wide text-primary">
+                            Tap to confirm
+                          </span>
+                        )}
                       </p>
+                      {stepTimestamp && reached && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {new Date(stepTimestamp).toLocaleString()}
+                        </p>
+                      )}
                     </div>
+                  </>
+                );
+
+                return canTapDelivered ? (
+                  <button
+                    key={s.key}
+                    onClick={() => setConfirmDeliveredOpen(true)}
+                    className="w-full flex items-center gap-3 active:opacity-70 text-left"
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div key={s.key} className="flex items-center gap-3">
+                    {content}
                   </div>
                 );
               })}
@@ -161,7 +220,7 @@ const OwnerOrderDetailPage = () => {
 
         {order.status === "shipped" && (
           <button
-            onClick={handleMarkReceived}
+            onClick={() => setConfirmDeliveredOpen(true)}
             className="w-full h-12 rounded-lg bg-success text-background text-sm font-bold flex items-center justify-center gap-2"
           >
             <PackageCheck className="w-4 h-4" />
@@ -169,6 +228,32 @@ const OwnerOrderDetailPage = () => {
           </button>
         )}
       </div>
+
+      {/* Confirm Delivered Dialog */}
+      <AlertDialog open={confirmDeliveredOpen} onOpenChange={setConfirmDeliveredOpen}>
+        <AlertDialogContent className="dark bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Confirm Receipt</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Confirm that you have received this order from {order.distributorName}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border bg-background text-foreground">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                handleMarkReceived();
+                setConfirmDeliveredOpen(false);
+              }}
+              className="bg-success text-background hover:bg-success/90"
+            >
+              Confirm Receipt
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
