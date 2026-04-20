@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
 
+export interface GoodwillConditions {
+  minMonthsOnBulkbook?: number;
+  minMonthlySales?: number;
+  minOrderValue?: number;
+  repaymentDays: number;
+  customCondition?: string;
+}
+
 export interface DistributorOwnProduct {
   id: string;
   name: string;
@@ -10,6 +18,7 @@ export interface DistributorOwnProduct {
   freeShippingThreshold?: number;
   goodwillEnabled: boolean;
   goodwillRepaymentDays?: number;
+  goodwillConditions?: GoodwillConditions;
   paymentMethods: string[];
 }
 
@@ -36,6 +45,7 @@ interface DistributorState {
   state: string;
   area: string;
   categories: string[];
+  customCategories: string[];
   freeShippingThreshold?: number;
   defaultGoodwillDays: number;
   autoApproveGoodwill: boolean;
@@ -46,14 +56,37 @@ interface DistributorState {
 interface DistributorContextType extends DistributorState {
   setProfile: (data: Partial<DistributorState>) => void;
   addProduct: (p: Omit<DistributorOwnProduct, "id">) => void;
+  updateProduct: (id: string, p: Partial<Omit<DistributorOwnProduct, "id">>) => void;
   removeProduct: (id: string) => void;
+  addCustomCategory: (cat: string) => void;
   addIncomingOrder: (o: Omit<DistributorIncomingOrder, "id" | "status" | "date"> & { id?: string; date?: string }) => void;
   setOrderStatus: (id: string, status: DistributorOrderStatus) => void;
 }
 
 const seedProducts: DistributorOwnProduct[] = [
-  { id: "dop1", name: "Peak Milk (Tin)", category: "Dairy", costPrice: 280, sellingPrice: 350, currentStock: 2400, freeShippingThreshold: 30000, goodwillEnabled: true, goodwillRepaymentDays: 60, paymentMethods: ["Cash", "Bank Transfer", "Goodwill"] },
-  { id: "dop2", name: "Peak Milk (Sachet x10)", category: "Dairy", costPrice: 220, sellingPrice: 280, currentStock: 4000, goodwillEnabled: false, paymentMethods: ["Cash", "Bank Transfer"] },
+  {
+    id: "dop1",
+    name: "Peak Milk (Tin)",
+    category: "Dairy",
+    costPrice: 280,
+    sellingPrice: 350,
+    currentStock: 2400,
+    freeShippingThreshold: 30000,
+    goodwillEnabled: true,
+    goodwillRepaymentDays: 60,
+    goodwillConditions: { repaymentDays: 60, minMonthsOnBulkbook: 6, minOrderValue: 10000 },
+    paymentMethods: ["Cash", "Bank Transfer", "Goodwill"],
+  },
+  {
+    id: "dop2",
+    name: "Peak Milk (Sachet x10)",
+    category: "Dairy",
+    costPrice: 220,
+    sellingPrice: 280,
+    currentStock: 4000,
+    goodwillEnabled: false,
+    paymentMethods: ["Cash", "Bank Transfer"],
+  },
 ];
 
 const seedOrders: DistributorIncomingOrder[] = [
@@ -87,6 +120,7 @@ export const DistributorProvider = ({ children }: { children: ReactNode }) => {
     state: "",
     area: "",
     categories: [],
+    customCategories: [],
     defaultGoodwillDays: 30,
     autoApproveGoodwill: false,
     products: seedProducts,
@@ -98,8 +132,19 @@ export const DistributorProvider = ({ children }: { children: ReactNode }) => {
   const addProduct = (p: Omit<DistributorOwnProduct, "id">) =>
     setState((s) => ({ ...s, products: [...s.products, { ...p, id: `dop-${Date.now()}` }] }));
 
+  const updateProduct = (id: string, p: Partial<Omit<DistributorOwnProduct, "id">>) =>
+    setState((s) => ({
+      ...s,
+      products: s.products.map((prod) => (prod.id === id ? { ...prod, ...p } : prod)),
+    }));
+
   const removeProduct = (id: string) =>
     setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
+
+  const addCustomCategory = (cat: string) =>
+    setState((s) =>
+      s.customCategories.includes(cat) ? s : { ...s, customCategories: [...s.customCategories, cat] }
+    );
 
   const addIncomingOrder = (o: Omit<DistributorIncomingOrder, "id" | "status" | "date"> & { id?: string; date?: string }) =>
     setState((s) => ({
@@ -133,7 +178,18 @@ export const DistributorProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <DistributorContext.Provider value={{ ...state, setProfile, addProduct, removeProduct, addIncomingOrder, setOrderStatus }}>
+    <DistributorContext.Provider
+      value={{
+        ...state,
+        setProfile,
+        addProduct,
+        updateProduct,
+        removeProduct,
+        addCustomCategory,
+        addIncomingOrder,
+        setOrderStatus,
+      }}
+    >
       {children}
     </DistributorContext.Provider>
   );
