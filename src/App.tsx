@@ -60,6 +60,9 @@ import AgentLogExpensePage from "./pages/agent/LogExpensePage";
 import DistributorDashboard from "./pages/distributor/DistributorDashboard";
 import DistributorInventoryPage from "./pages/distributor/DistributorInventoryPage";
 import DistributorAddProductPage from "./pages/distributor/DistributorAddProductPage";
+import DistributorProductDetailPage from "./pages/distributor/DistributorProductDetailPage";
+import DistributorGoodwillConditionsPage from "./pages/distributor/DistributorGoodwillConditionsPage";
+import DistributorHealthBreakdownPage from "./pages/distributor/DistributorHealthBreakdownPage";
 import DistributorOrdersPage from "./pages/distributor/DistributorOrdersPage";
 import DistributorOrderDetailPage from "./pages/distributor/DistributorOrderDetailPage";
 import DistributorReportsPage from "./pages/distributor/DistributorReportsPage";
@@ -146,8 +149,12 @@ const App = () => (
 
                       {/* Distributor */}
                       <Route path="/distributor" element={<DistributorDashboard />} />
+                      <Route path="/distributor/health" element={<DistributorHealthBreakdownPage />} />
                       <Route path="/distributor/inventory" element={<DistributorInventoryPage />} />
                       <Route path="/distributor/inventory/add" element={<DistributorAddProductPage />} />
+                      <Route path="/distributor/inventory/edit/:id" element={<DistributorAddProductPage />} />
+                      <Route path="/distributor/inventory/goodwill-conditions" element={<DistributorGoodwillConditionsPage />} />
+                      <Route path="/distributor/inventory/:id" element={<DistributorProductDetailPage />} />
                       <Route path="/distributor/orders" element={<DistributorOrdersPage />} />
                       <Route path="/distributor/order/:id" element={<DistributorOrderDetailPage />} />
                       <Route path="/distributor/reports" element={<DistributorReportsPage />} />
