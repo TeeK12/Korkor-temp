@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check, Plus } from "lucide-react";
+import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 import { products as productStore, type Product } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
