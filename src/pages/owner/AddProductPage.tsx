@@ -2,8 +2,10 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import { products as productStore, type Product } from "@/data/mockData";
+import { toast } from "@/hooks/use-toast";
 
-const unitTypes = ["Carton", "Bag", "Roll", "Piece", "Kg", "Litre", "Yard", "Other"];
+const baseUnitTypes = ["Carton", "Bag", "Roll", "Piece", "Kg", "Litre", "Yard"];
 
 interface CapturedPhoto {
   id: string;
@@ -11,6 +13,81 @@ interface CapturedPhoto {
   label: string;
   saved: boolean;
 }
+
+// --- Field components defined OUTSIDE the page so they are NOT recreated on
+//     every render. Recreating them caused React to unmount the underlying
+//     <input>, which made the mobile keyboard close after every keystroke.
+type TextFieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  prefix?: string;
+  inputMode?: "text" | "numeric" | "decimal";
+  error?: string;
+};
+
+const TextField = ({ label, placeholder, value, onChange, type = "text", prefix, inputMode, error }: TextFieldProps) => (
+  <div>
+    <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
+    <div className="relative">
+      {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{prefix}</span>}
+      <input
+        type={type}
+        inputMode={inputMode ?? (type === "number" ? "decimal" : "text")}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full h-12 ${prefix ? "pl-8" : "px-4"} pr-4 rounded-lg border ${error ? "border-critical" : "border-input"} bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary`}
+      />
+    </div>
+    {error && <p className="text-[11px] text-critical mt-1">{error}</p>}
+  </div>
+);
+
+type SelectFieldProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  onAddCustom?: () => void;
+  error?: string;
+};
+
+const SelectField = ({ label, value, onChange, options, onAddCustom, error }: SelectFieldProps) => (
+  <div>
+    <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => {
+          if (e.target.value === "__add__" && onAddCustom) {
+            onAddCustom();
+            return;
+          }
+          onChange(e.target.value);
+        }}
+        className={`w-full h-12 px-4 rounded-lg border ${error ? "border-critical" : "border-input"} bg-card text-foreground text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary`}
+      >
+        <option value="">Select</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {onAddCustom && <option value="__add__">+ Add custom…</option>}
+      </select>
+      <ChevronDown className="w-4 h-4 text-muted-foreground absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+    </div>
+    {error && <p className="text-[11px] text-critical mt-1">{error}</p>}
+  </div>
+);
+
+const ReadOnlyField = ({ label, value, color = "text-foreground" }: { label: string; value: string; color?: string }) => (
+  <div>
+    <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
+    <div className={`w-full h-12 px-4 rounded-lg border border-input bg-muted/50 flex items-center text-sm font-semibold ${color}`}>
+      {value}
+    </div>
+  </div>
+);
 
 const AddProductPage = () => {
   const navigate = useNavigate();
@@ -28,19 +105,43 @@ const AddProductPage = () => {
   // Active product form (selected thumbnail)
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
 
+  // Custom unit types (persist for the session)
+  const [customUnits, setCustomUnits] = useState<string[]>([]);
+  const allUnits = useMemo(() => [...baseUnitTypes, ...customUnits], [customUnits]);
+
   const [form, setForm] = useState({
-    name: "", buyingUnit: "", sellingUnit: "",
-    unitsPerBuying: "", totalOrderAmount: "", quantityOrdered: "",
-    transportFee: "", actualSellingPrice: "", openingStock: "",
+    name: "",
+    buyingUnit: "",
+    sellingUnit: "",
+    buyingUnitsOrdered: "",       // NEW (was quantityOrdered)
+    sellingUnitsPerBuying: "",    // NEW (was unitsPerBuying)
+    totalOrderAmount: "",
+    transportFee: "",
+    actualSellingPrice: "",
+    applyPriceToCurrent: false,
   });
 
-  const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const update = (k: string, v: string | boolean) => {
+    setForm((p) => ({ ...p, [k]: v }));
+    if (errors[k]) setErrors((e) => ({ ...e, [k]: "" }));
+  };
+
+  const promptAddCustomUnit = (target: "buyingUnit" | "sellingUnit") => {
+    const name = window.prompt("Enter custom unit name (e.g. Sachet)")?.trim();
+    if (!name) return;
+    if (!allUnits.includes(name)) {
+      setCustomUnits((prev) => [...prev, name]);
+    }
+    update(target, name);
+  };
 
   // Camera functions
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -68,7 +169,6 @@ const AddProductPage = () => {
     setCameraOpen(false);
     setCurrentCapture(null);
     setLabelInput("");
-    // If we have photos and no active one, select the first unsaved
     if (capturedPhotos.length > 0 && !activePhotoId) {
       const first = capturedPhotos.find((p) => !p.saved) || capturedPhotos[0];
       selectThumbnail(first);
@@ -84,7 +184,6 @@ const AddProductPage = () => {
     };
   }, [cameraOpen, currentCapture, startCamera, stopCamera]);
 
-  // Simulate AI auto-capture after stable frame detection
   useEffect(() => {
     if (!cameraOpen || currentCapture) return;
     setDetecting(true);
@@ -117,45 +216,29 @@ const AddProductPage = () => {
     setCapturedPhotos((prev) => [...prev, newPhoto]);
     setCurrentCapture(null);
     setLabelInput("");
-    // Camera continues for next product
   };
 
   const selectThumbnail = (photo: CapturedPhoto) => {
     setActivePhotoId(photo.id);
-    setForm((prev) => ({
-      ...prev,
+    setForm({
       name: photo.label,
-      buyingUnit: "", sellingUnit: "", unitsPerBuying: "",
-      totalOrderAmount: "", quantityOrdered: "", transportFee: "",
-      actualSellingPrice: "", openingStock: "",
-    }));
+      buyingUnit: "",
+      sellingUnit: "",
+      buyingUnitsOrdered: "",
+      sellingUnitsPerBuying: "",
+      totalOrderAmount: "",
+      transportFee: "",
+      actualSellingPrice: "",
+      applyPriceToCurrent: false,
+    });
+    setErrors({});
   };
 
-  const saveProduct = () => {
-    if (activePhotoId) {
-      setCapturedPhotos((prev) =>
-        prev.map((p) => (p.id === activePhotoId ? { ...p, saved: true } : p))
-      );
-      // Move to next unsaved
-      const next = capturedPhotos.find((p) => p.id !== activePhotoId && !p.saved);
-      if (next) {
-        selectThumbnail(next);
-      } else {
-        setActivePhotoId(null);
-        setForm({
-          name: "", buyingUnit: "", sellingUnit: "", unitsPerBuying: "",
-          totalOrderAmount: "", quantityOrdered: "", transportFee: "",
-          actualSellingPrice: "", openingStock: "",
-        });
-      }
-    }
-  };
-
-  // Calculations
+  // ---- Calculations ----
   const calc = useMemo(() => {
-    const units = parseFloat(form.unitsPerBuying) || 0;
+    const units = parseFloat(form.sellingUnitsPerBuying) || 0;
     const totalOrder = parseFloat(form.totalOrderAmount) || 0;
-    const qtyOrdered = parseFloat(form.quantityOrdered) || 0;
+    const qtyOrdered = parseFloat(form.buyingUnitsOrdered) || 0;
     const transport = parseFloat(form.transportFee) || 0;
     const asp = parseFloat(form.actualSellingPrice) || 0;
 
@@ -168,6 +251,8 @@ const AddProductPage = () => {
     const marginPerUnit = asp - costPerSelling;
     const marginPct = costPerSelling > 0 ? ((asp - costPerSelling) / costPerSelling) * 100 : 0;
 
+    const openingStock = qtyOrdered * units;
+
     let verdictLabel = "";
     let verdictColor = "";
     if (asp > 0 && costPerSelling > 0) {
@@ -176,44 +261,62 @@ const AddProductPage = () => {
       else { verdictLabel = "Healthy margin"; verdictColor = "text-success"; }
     }
 
-    return { cogPerBuying, expPerBuying, totalCostPerBuying, costPerSelling, minViablePrice, idealPrice, marginPerUnit, marginPct, verdictLabel, verdictColor };
-  }, [form.unitsPerBuying, form.totalOrderAmount, form.quantityOrdered, form.transportFee, form.actualSellingPrice]);
+    return {
+      cogPerBuying, expPerBuying, totalCostPerBuying, costPerSelling,
+      minViablePrice, idealPrice, marginPerUnit, marginPct,
+      verdictLabel, verdictColor, openingStock,
+    };
+  }, [form.sellingUnitsPerBuying, form.totalOrderAmount, form.buyingUnitsOrdered, form.transportFee, form.actualSellingPrice]);
 
   const fmt = (n: number) => `₦${Math.round(n).toLocaleString()}`;
 
-  const SelectField = ({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) => (
-    <div>
-      <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
-      <div className="relative">
-        <select value={value} onChange={(e) => onChange(e.target.value)}
-          className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary">
-          <option value="">Select</option>
-          {options.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-        <ChevronDown className="w-4 h-4 text-muted-foreground absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-      </div>
-    </div>
-  );
+  const sellingUnitLabel = form.sellingUnit || "units";
+  const buyingUnitLabel = form.buyingUnit || "units";
 
-  const TextField = ({ label, placeholder, value, onChange, type = "text", prefix }: { label: string; placeholder: string; value: string; onChange: (v: string) => void; type?: string; prefix?: string }) => (
-    <div>
-      <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
-      <div className="relative">
-        {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">{prefix}</span>}
-        <input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)}
-          className={`w-full h-12 ${prefix ? "pl-8" : "px-4"} pr-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary`} />
-      </div>
-    </div>
-  );
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.name.trim()) e.name = "Required";
+    if (!form.buyingUnit) e.buyingUnit = "Required";
+    if (!form.sellingUnit) e.sellingUnit = "Required";
+    if (!form.buyingUnitsOrdered || parseFloat(form.buyingUnitsOrdered) <= 0) e.buyingUnitsOrdered = "Required";
+    if (!form.sellingUnitsPerBuying || parseFloat(form.sellingUnitsPerBuying) <= 0) e.sellingUnitsPerBuying = "Required";
+    if (!form.totalOrderAmount || parseFloat(form.totalOrderAmount) <= 0) e.totalOrderAmount = "Required";
+    if (!form.actualSellingPrice || parseFloat(form.actualSellingPrice) <= 0) e.actualSellingPrice = "Required";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-  const ReadOnlyField = ({ label, value, color = "text-foreground" }: { label: string; value: string; color?: string }) => (
-    <div>
-      <label className="text-sm font-medium text-foreground block mb-1.5">{label}</label>
-      <div className={`w-full h-12 px-4 rounded-lg border border-input bg-muted/50 flex items-center text-sm font-semibold ${color}`}>
-        {value}
-      </div>
-    </div>
-  );
+  const saveProduct = () => {
+    if (!validate()) {
+      toast({ title: "Please fix the errors", description: "Some required fields are missing.", variant: "destructive" });
+      return;
+    }
+
+    const newProduct: Product = {
+      id: `p-${Date.now()}`,
+      name: form.name.trim(),
+      category: "Provisions",
+      currentStock: Math.round(calc.openingStock),
+      buyingUnit: form.buyingUnit,
+      sellingUnit: form.sellingUnit,
+      unitsPerBuyingUnit: parseFloat(form.sellingUnitsPerBuying) || 0,
+      costPrice: Math.round(calc.totalCostPerBuying),
+      sellingPrice: parseFloat(form.actualSellingPrice) || 0,
+      totalRevenue: 0,
+      status: "healthy",
+      salesHistory: [0, 0, 0, 0, 0, 0, 0],
+      stockLog: [{ date: "Just now", action: "Added", qty: Math.round(calc.openingStock), by: "Owner" }],
+    };
+
+    productStore.push(newProduct);
+
+    if (activePhotoId) {
+      setCapturedPhotos((prev) => prev.map((p) => (p.id === activePhotoId ? { ...p, saved: true } : p)));
+    }
+
+    toast({ title: "Product saved successfully" });
+    navigate("/owner/inventory");
+  };
 
   return (
     <div className="app-shell dark bg-background">
@@ -269,20 +372,16 @@ const AddProductPage = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Badge */}
             {capturedPhotos.length > 0 && (
               <div className="absolute top-4 right-14 z-10 bg-primary text-primary-foreground text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
                 {capturedPhotos.length}
               </div>
             )}
-
             <div className="flex-1 relative overflow-hidden">
               {!currentCapture ? (
                 <>
                   <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                   <canvas ref={canvasRef} className="hidden" />
-                  {/* Scanning frame */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className={`w-56 h-56 border-2 rounded-xl ${detecting ? "border-primary animate-pulse" : "border-muted-foreground/40"}`} />
                   </div>
@@ -313,7 +412,6 @@ const AddProductPage = () => {
                 </div>
               )}
             </div>
-
             <div className="px-4 py-4">
               <button onClick={closeCameraModal} className="w-full h-12 rounded-lg border border-border bg-card text-foreground font-semibold text-sm">
                 Done ({capturedPhotos.length} product{capturedPhotos.length !== 1 ? "s" : ""})
@@ -325,22 +423,53 @@ const AddProductPage = () => {
         <div className="space-y-4">
           {/* Product Info */}
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product Info</p>
-          <TextField label="Product Name" placeholder="e.g. Indomie Chicken (70g)" value={form.name} onChange={(v) => update("name", v)} />
+          <TextField label="Product Name" placeholder="e.g. Indomie Chicken (70g)" value={form.name} onChange={(v) => update("name", v)} error={errors.name} />
 
           <div className="grid grid-cols-2 gap-3">
-            <SelectField label="Buying Unit" value={form.buyingUnit} onChange={(v) => update("buyingUnit", v)} options={unitTypes} />
-            <SelectField label="Selling Unit" value={form.sellingUnit} onChange={(v) => update("sellingUnit", v)} options={unitTypes} />
+            <SelectField
+              label="Buying Unit"
+              value={form.buyingUnit}
+              onChange={(v) => update("buyingUnit", v)}
+              options={allUnits}
+              onAddCustom={() => promptAddCustomUnit("buyingUnit")}
+              error={errors.buyingUnit}
+            />
+            <SelectField
+              label="Selling Unit"
+              value={form.sellingUnit}
+              onChange={(v) => update("sellingUnit", v)}
+              options={allUnits}
+              onAddCustom={() => promptAddCustomUnit("sellingUnit")}
+              error={errors.sellingUnit}
+            />
           </div>
 
-          <TextField label="Units per Buying Unit" placeholder="e.g. 12" value={form.unitsPerBuying} onChange={(v) => update("unitsPerBuying", v)} type="number" />
+          {/* FIX 2 — split into two side-by-side fields with dynamic labels */}
+          <div className="grid grid-cols-2 gap-3">
+            <TextField
+              label={`How many ${buyingUnitLabel.toLowerCase()}${form.buyingUnit ? "s" : ""} did you order?`}
+              placeholder="e.g. 10"
+              value={form.buyingUnitsOrdered}
+              onChange={(v) => update("buyingUnitsOrdered", v)}
+              type="number"
+              error={errors.buyingUnitsOrdered}
+            />
+            <TextField
+              label={`How many ${sellingUnitLabel.toLowerCase()}${form.sellingUnit ? "s" : ""} in one ${buyingUnitLabel.toLowerCase()}?`}
+              placeholder="e.g. 40"
+              value={form.sellingUnitsPerBuying}
+              onChange={(v) => update("sellingUnitsPerBuying", v)}
+              type="number"
+              error={errors.sellingUnitsPerBuying}
+            />
+          </div>
 
-          {/* Cost Calculator — Order Details */}
+          {/* Order Details — duplicate "How many buying units" removed */}
           <div className="border-t border-border pt-4 mt-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Order Details</p>
           </div>
 
-          <TextField label="Total amount paid for this order" placeholder="e.g. ₦50,000" value={form.totalOrderAmount} onChange={(v) => update("totalOrderAmount", v)} type="number" prefix="₦" />
-          <TextField label="How many buying units did you order?" placeholder="e.g. 10 cartons" value={form.quantityOrdered} onChange={(v) => update("quantityOrdered", v)} type="number" />
+          <TextField label="Total amount paid for this order" placeholder="e.g. ₦50,000" value={form.totalOrderAmount} onChange={(v) => update("totalOrderAmount", v)} type="number" prefix="₦" error={errors.totalOrderAmount} />
           <TextField label="Total transport and handling for this order" placeholder="e.g. ₦2,000" value={form.transportFee} onChange={(v) => update("transportFee", v)} type="number" prefix="₦" />
 
           <ReadOnlyField label="Cost of Goods per Buying Unit" value={calc.cogPerBuying > 0 ? fmt(calc.cogPerBuying) : "—"} color="text-primary" />
@@ -356,9 +485,8 @@ const AddProductPage = () => {
           <ReadOnlyField label="Minimum Viable Price (10% margin)" value={calc.minViablePrice > 0 ? fmt(calc.minViablePrice) : "—"} color="text-warning" />
           <ReadOnlyField label="Ideal Selling Price (30% margin)" value={calc.idealPrice > 0 ? fmt(calc.idealPrice) : "—"} color="text-success" />
 
-          <TextField label="Actual Selling Price" placeholder="Your price per selling unit" value={form.actualSellingPrice} onChange={(v) => update("actualSellingPrice", v)} type="number" prefix="₦" />
+          <TextField label="Actual Selling Price" placeholder="Your price per selling unit" value={form.actualSellingPrice} onChange={(v) => update("actualSellingPrice", v)} type="number" prefix="₦" error={errors.actualSellingPrice} />
 
-          {/* Live Margin */}
           {calc.verdictLabel && (
             <div className={`rounded-lg p-4 border ${calc.verdictColor === "text-success" ? "bg-success/5 border-success/20" : calc.verdictColor === "text-warning" ? "bg-warning/5 border-warning/20" : "bg-critical/5 border-critical/20"}`}>
               <div className="flex items-center gap-2 mb-2">
@@ -376,16 +504,43 @@ const AddProductPage = () => {
             </div>
           )}
 
-          {/* Stock */}
+          {/* Stock — auto-calculated cards */}
           <div className="border-t border-border pt-4 mt-2">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">Stock</p>
           </div>
 
-          <TextField label="Opening Stock Quantity" placeholder="Current quantity" value={form.openingStock} onChange={(v) => update("openingStock", v)} type="number" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-card border border-border rounded-lg p-4">
+              <p className="text-xs text-muted-foreground mb-1">Opening Stock</p>
+              <p className="text-2xl font-bold text-foreground">{Math.round(calc.openingStock).toLocaleString()}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{sellingUnitLabel}{calc.openingStock !== 1 ? "s" : ""}</p>
+            </div>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <p className="text-xs text-muted-foreground mb-1">Current Inventory</p>
+              <p className="text-2xl font-bold text-primary">{Math.round(calc.openingStock).toLocaleString()}</p>
+              <p className="text-[11px] text-muted-foreground mt-1">{sellingUnitLabel}{calc.openingStock !== 1 ? "s" : ""}</p>
+            </div>
+          </div>
 
-          {/* Projected Revenue — below stock, above save */}
+          {/* Apply price toggle */}
+          <div className="bg-card border border-border rounded-lg p-4 flex items-start justify-between gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-foreground">Apply new price to current inventory</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Turn on to update price for existing stock</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => update("applyPriceToCurrent", !form.applyPriceToCurrent)}
+              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${form.applyPriceToCurrent ? "bg-primary" : "bg-muted"}`}
+              aria-pressed={form.applyPriceToCurrent}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-background transition-transform ${form.applyPriceToCurrent ? "translate-x-5" : ""}`} />
+            </button>
+          </div>
+
+          {/* Projected revenue */}
           {(() => {
-            const openStock = parseFloat(form.openingStock) || 0;
+            const openStock = calc.openingStock;
             const idealRev = openStock * calc.idealPrice;
             const yourRev = openStock * (parseFloat(form.actualSellingPrice) || 0);
             if (openStock > 0 && calc.idealPrice > 0) {
