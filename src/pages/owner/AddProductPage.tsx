@@ -1,7 +1,8 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check, Plus, ImageIcon } from "lucide-react";
+import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, Check, Plus } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
 import {
   products as productStore,
   type Product,
@@ -9,7 +10,6 @@ import {
   customCategoryStore,
   addCustomCategory,
   findProductByName,
-  computeStockStatus,
 } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 
