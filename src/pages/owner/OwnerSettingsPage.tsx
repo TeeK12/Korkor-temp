@@ -1,29 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, User, CreditCard, Info, ChevronRight, LogOut, Package, Clock } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  User,
+  CreditCard,
+  Info,
+  ChevronRight,
+  LogOut,
+  Bell,
+  Lock,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const OwnerSettingsPage = () => {
   const navigate = useNavigate();
-  const { logout, businessName, userName, businessType, setBusinessType } = useAuth();
+  const { logout, businessName, userName } = useAuth();
 
   const sections = [
     {
       title: "Business Profile",
       items: [
-        { icon: Building2, label: "Business name, category, location", action: () => {} },
         {
-          icon: businessType === "service" ? Clock : Package,
-          label: `Business type: ${businessType === "service" ? "Service" : "Product"}`,
-          action: () => setBusinessType(businessType === "service" ? "product" : "service"),
-          sublabel: "Tap to switch",
+          icon: Building2,
+          label: "Business name, location, type",
+          action: () => navigate("/owner/settings/business-profile"),
         },
       ],
     },
     {
       title: "Account",
       items: [
-        { icon: User, label: "Phone number, password", action: () => {} },
+        {
+          icon: User,
+          label: "Phone number, password",
+          action: () => navigate("/owner/settings/account"),
+        },
       ],
     },
     {
@@ -33,9 +46,43 @@ const OwnerSettingsPage = () => {
       ],
     },
     {
+      title: "Notifications",
+      items: [
+        {
+          icon: Bell,
+          label: "Manage alerts and updates",
+          action: () => navigate("/owner/settings/notifications"),
+        },
+      ],
+    },
+    {
+      title: "Privacy & Security",
+      items: [
+        {
+          icon: Lock,
+          label: "2FA, data export, delete account",
+          action: () => navigate("/owner/settings/privacy"),
+        },
+      ],
+    },
+    {
+      title: "Partners",
+      items: [
+        {
+          icon: Users,
+          label: "Share health reports with partners",
+          action: () => navigate("/owner/settings/partners"),
+        },
+      ],
+    },
+    {
       title: "About",
       items: [
-        { icon: Info, label: "About Bulkbook", action: () => {} },
+        {
+          icon: Info,
+          label: "About Bulkbook",
+          action: () => navigate("/owner/settings/about"),
+        },
       ],
     },
   ];
