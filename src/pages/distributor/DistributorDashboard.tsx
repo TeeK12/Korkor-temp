@@ -79,7 +79,7 @@ const DistributorDashboard = () => {
             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <Zap className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold text-foreground">AI Daily Brief</span>
+            <span className="text-sm font-semibold text-foreground">Daily Brief</span>
           </div>
           <p className="text-sm text-foreground leading-relaxed">
             <strong>{todaysOrders.length} new orders</strong> received today. Peak Milk stock is running low. 
