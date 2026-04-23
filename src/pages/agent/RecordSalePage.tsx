@@ -28,6 +28,7 @@ const RecordSalePage = () => {
   const location = useLocation();
   const { isAuthorized, businessName } = useAuth();
   const [tab, setTab] = useState<"search" | "camera">("search");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null);
@@ -95,17 +96,28 @@ const RecordSalePage = () => {
     }
   }, [tab]);
 
+  // Open the new strict camera flow whenever the Camera tab is selected.
   useEffect(() => {
-    if (tab === "camera" && scanning) {
-      const timer = setTimeout(() => {
-        const randomProduct = products[Math.floor(Math.random() * products.length)];
-        setCameraProduct(randomProduct);
-        setCameraQty(1);
-        setScanning(false);
-      }, 2500);
-      return () => clearTimeout(timer);
+    if (tab === "camera") {
+      setCameraOpen(true);
     }
-  }, [tab, scanning]);
+  }, [tab]);
+
+  const handleCameraContinue = ({ name }: CapturedProduct) => {
+    setCameraOpen(false);
+    setTab("search");
+    const match = findProductByName(name);
+    if (match) {
+      addToCart(match, 1);
+      toast({ title: "Added to cart", description: `${match.name} added.` });
+    } else {
+      setQuery(name);
+      toast({
+        title: "Product not found",
+        description: `“${name}” is not in your inventory yet. Search or add it first.`,
+      });
+    }
+  };
 
   const addToCart = (product: typeof products[0], quantity: number) => {
     setCart((prev) => {
