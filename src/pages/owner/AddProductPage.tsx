@@ -338,6 +338,71 @@ const AddProductPage = () => {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product Info</p>
           <TextField label="Product Name" placeholder="e.g. Indomie Chicken (70g)" value={form.name} onChange={(v) => update("name", v)} error={errors.name} />
 
+          {/* Category with inline "+ Add new" */}
+          <div>
+            <label className="text-sm font-medium text-foreground block mb-1.5">Category</label>
+            {showCustomCatInput ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={customCatInput}
+                  onChange={(e) => setCustomCatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addCustomCat();
+                    if (e.key === "Escape") { setShowCustomCatInput(false); setCustomCatInput(""); }
+                  }}
+                  placeholder="New category name"
+                  className="flex-1 h-12 px-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomCat}
+                  disabled={!customCatInput.trim()}
+                  className="h-12 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCustomCatInput(false); setCustomCatInput(""); }}
+                  className="h-12 px-3 rounded-lg border border-input text-muted-foreground text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <select
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === "__add__") {
+                      setShowCustomCatInput(true);
+                      return;
+                    }
+                    update("category", e.target.value);
+                  }}
+                  className="w-full h-12 pl-4 pr-20 rounded-lg border border-input bg-card text-foreground text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Select category</option>
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="__add__">+ Add new category…</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomCatInput(true)}
+                  aria-label="Add new category"
+                  className="absolute right-10 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <ChevronDown className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <SelectField
               label="Buying Unit"
