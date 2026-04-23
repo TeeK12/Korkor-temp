@@ -37,9 +37,6 @@ const RecordSalePage = () => {
   const [collaborators, setCollaborators] = useState<{ id: string; name: string }[]>([]);
   const [collabQuery, setCollabQuery] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [cameraProduct, setCameraProduct] = useState<typeof products[0] | null>(null);
-  const [cameraQty, setCameraQty] = useState(1);
-  const [scanning, setScanning] = useState(true);
   const [showManageGroups, setShowManageGroups] = useState(false);
   const [groups, setGroups] = useState<ProductGroup[]>([
     { id: "1", name: "Provision", productIds: ["1", "2", "3"], useCount: 12 },
@@ -148,13 +145,6 @@ const RecordSalePage = () => {
     setQty("1");
     setQuery("");
     searchRef.current?.focus();
-  };
-
-  const handleCameraAdd = () => {
-    if (!cameraProduct) return;
-    addToCart(cameraProduct, cameraQty);
-    setCameraProduct(null);
-    setScanning(true);
   };
 
   const addCollaborator = (agent: { id: string; name: string }) => {
