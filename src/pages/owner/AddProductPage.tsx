@@ -257,7 +257,7 @@ const AddProductPage = () => {
     const newProduct: Product = {
       id: `p-${Date.now()}`,
       name: form.name.trim(),
-      category: "Provisions",
+      category: form.category || "Uncategorized",
       currentStock: Math.round(calc.openingStock),
       buyingUnit: form.buyingUnit,
       sellingUnit: form.sellingUnit,
