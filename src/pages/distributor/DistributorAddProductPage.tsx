@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Check } from "lucide-react";
+import { ArrowLeft, Plus, Check, Camera } from "lucide-react";
 import { useDistributor, GoodwillConditions } from "@/contexts/DistributorContext";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
 import { toast } from "sonner";
 
 const BASE_CATEGORIES = ["Dairy", "Beverages", "Grains", "Provisions", "Cosmetics", "Electronics", "Building Materials"];
