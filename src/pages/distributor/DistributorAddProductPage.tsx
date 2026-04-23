@@ -166,28 +166,71 @@ const DistributorAddProductPage = () => {
 
         <div className="space-y-4">
           {!isEdit && (
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              className="w-full h-28 rounded-lg border-2 border-dashed border-border bg-card flex flex-col items-center justify-center gap-2 overflow-hidden relative"
-            >
-              {capturedImage ? (
-                <img src={capturedImage} alt="Captured" className="absolute inset-0 w-full h-full object-cover" />
-              ) : (
-                <>
+            <>
+              {capturedPhotos.length === 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setCameraOpen(true)}
+                  className="w-full h-28 rounded-lg border-2 border-dashed border-border bg-card flex flex-col items-center justify-center gap-2"
+                >
                   <Camera className="w-6 h-6 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Tap to capture product photo</span>
-                </>
+                  <span className="text-xs text-muted-foreground">Tap to capture product photos</span>
+                </button>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Captured Products
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCameraOpen(true)}
+                      className="ml-auto text-xs text-primary font-medium"
+                    >
+                      + Add More
+                    </button>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {capturedPhotos.map((photo) => (
+                      <button
+                        key={photo.id}
+                        type="button"
+                        onClick={() => {
+                          setActivePhotoId(photo.id);
+                          update("name", photo.label);
+                        }}
+                        className={`flex-shrink-0 w-20 flex flex-col items-center gap-1 ${
+                          activePhotoId === photo.id ? "ring-2 ring-primary rounded-lg" : ""
+                        }`}
+                      >
+                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted">
+                          <img src={photo.dataUrl} alt={photo.label} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground text-center truncate w-full">
+                          {photo.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </button>
+            </>
           )}
 
           <ProductCameraFlow
             open={cameraOpen}
             onClose={() => setCameraOpen(false)}
-            onContinue={({ dataUrl, name }: CapturedProduct) => {
-              setCapturedImage(dataUrl);
+            onSavedCapture={({ dataUrl, name }: CapturedProduct) => {
+              const newPhoto = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                dataUrl,
+                label: name,
+              };
+              setCapturedPhotos((prev) => [...prev, newPhoto]);
+              setActivePhotoId(newPhoto.id);
               setForm((p) => ({ ...p, name }));
+            }}
+            onContinue={() => {
               setCameraOpen(false);
             }}
           />
