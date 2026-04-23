@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { recordSaleForBusiness } from "@/data/subAccountStore";
 
 export type PaymentMethod = "cash" | "card" | "transfer" | "promise";
 
@@ -57,10 +59,13 @@ const outstanding = (s: SaleRecord) => Math.max(0, s.total - depositsTotal(s));
 
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<SaleRecord[]>(initialSales);
+  const { businessName } = useAuth();
 
   const addSale = (sale: Omit<SaleRecord, "id">) => {
     const id = `s${Date.now()}`;
     setSales((prev) => [{ ...sale, id }, ...prev]);
+    // Mark business as having recent sales activity — keeps Generate Key enabled.
+    recordSaleForBusiness(businessName || "default-business");
   };
 
   const markPromisePaid = (id: string) => {
