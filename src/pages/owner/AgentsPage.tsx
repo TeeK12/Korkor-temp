@@ -1,24 +1,61 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { KeyRound, Copy, Check, X } from "lucide-react";
+import { KeyRound, Copy, Check, X, Lock } from "lucide-react";
 import { agents } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  canGenerateAuthKey,
+  issueAuthKey,
+  getTotalAgentSlots,
+  isAgentAuthorized,
+} from "@/data/subAccountStore";
+import { toast } from "sonner";
 
-// Mock authorization and unread status
-const agentAuth: Record<string, boolean> = { "1": true, "2": true };
+// Mock unread recommendations status — authorization now lives in subAccountStore.
 const unreadRecs: Record<string, number> = { "1": 2, "2": 0 };
 
 const AgentsPage = () => {
   const navigate = useNavigate();
+  const { businessName } = useAuth();
+  const businessId = businessName || "default-business";
+
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [authCode, setAuthCode] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const canGenerate = useMemo(
+    () => canGenerateAuthKey(businessId),
+    [businessId],
+  );
+  const totalSlots = useMemo(() => getTotalAgentSlots(businessId), [businessId]);
+  // Default seeded mock authorizations ("1" and "2") for demo continuity.
+  const usedSlots = agents.filter(
+    (a) => isAgentAuthorized(businessId, a.id, ["1", "2"].includes(a.id)),
+  ).length;
+  const slotsAvailable = usedSlots < totalSlots;
+
   const generateCode = () => {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setAuthCode(code);
-    setCopied(false);
-    setShowCodeModal(true);
+    if (!canGenerate) {
+      toast.error(
+        "Generate Key is paused. Record sales activity to re-enable.",
+      );
+      return;
+    }
+    if (!slotsAvailable) {
+      navigate("/owner/billing/unlock-agents");
+      return;
+    }
+    try {
+      const issued = issueAuthKey(businessId);
+      setAuthCode(issued.code);
+      setCopied(false);
+      setShowCodeModal(true);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not generate key",
+      );
+    }
   };
 
   const copyCode = () => {
@@ -30,22 +67,48 @@ const AgentsPage = () => {
   return (
     <div className="app-shell dark bg-background">
       <div className="page-content px-4 pt-5">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-lg font-bold text-foreground">Sub Accounts</h1>
           <button
             onClick={generateCode}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium"
+            disabled={!canGenerate}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium ${
+              canGenerate
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
           >
-            <KeyRound className="w-3.5 h-3.5" />
+            {canGenerate ? (
+              <KeyRound className="w-3.5 h-3.5" />
+            ) : (
+              <Lock className="w-3.5 h-3.5" />
+            )}
             Generate Key
           </button>
         </div>
+        {!canGenerate && (
+          <p className="text-[11px] text-warning mb-4">
+            Generate Key is paused. Record sales activity to re-enable.
+          </p>
+        )}
+        {canGenerate && !slotsAvailable && (
+          <button
+            onClick={() => navigate("/owner/billing/unlock-agents")}
+            className="text-[11px] text-primary mb-4 underline-offset-2 hover:underline"
+          >
+            All slots used — tap Generate Key to unlock more.
+          </button>
+        )}
 
         {/* Agent list */}
         <div className="space-y-3">
           {agents.map((agent) => {
             const unread = unreadRecs[agent.id] || 0;
-            const authorized = agentAuth[agent.id] ?? false;
+            const authorized = isAgentAuthorized(
+              businessId,
+              agent.id,
+              ["1", "2"].includes(agent.id),
+            );
             return (
               <button
                 key={agent.id}
@@ -81,11 +144,6 @@ const AgentsPage = () => {
           })}
         </div>
 
-        {/* Locked slot */}
-        <div className="mt-4 bg-muted/30 rounded-lg p-4 border border-dashed border-border text-center">
-          <p className="text-sm font-medium text-muted-foreground">+ Add More Agents</p>
-          <p className="text-xs text-muted-foreground mt-1">Upgrade to add more sub accounts</p>
-        </div>
       </div>
 
       {/* Auth Code Modal */}
