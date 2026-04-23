@@ -29,7 +29,7 @@ const OwnerSettingsPage = () => {
     {
       title: "Billing",
       items: [
-        { icon: CreditCard, label: "Sub account plan & upgrade", action: () => {} },
+        { icon: CreditCard, label: "Sub account plan & upgrade", action: () => navigate("/owner/billing") },
       ],
     },
     {
