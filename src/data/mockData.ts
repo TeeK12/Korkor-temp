@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   category: string;
   currentStock: number;
+  openingStock: number;
   buyingUnit: string;
   sellingUnit: string;
   unitsPerBuyingUnit: number;
@@ -12,6 +13,8 @@ export interface Product {
   status: "healthy" | "low" | "critical" | "dead";
   salesHistory: number[];
   stockLog: { date: string; action: string; qty: number; by: string }[];
+  // ISO date of last recorded sale (used for "Dead" detection — 30 days no sales)
+  lastSaleDate?: string;
 }
 
 export interface Agent {
