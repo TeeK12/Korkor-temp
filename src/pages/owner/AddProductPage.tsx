@@ -160,85 +160,23 @@ const AddProductPage = () => {
     update(target, name);
   };
 
-  // Camera functions
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch {
-      console.error("Camera access denied");
-    }
-  }, []);
+  // Open / close handled by ProductCameraFlow; we just toggle a flag.
+  const openCameraModal = () => setCameraOpen(true);
 
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-  }, []);
-
-  const openCameraModal = () => {
-    setCameraOpen(true);
-    setCurrentCapture(null);
-    setLabelInput("");
-  };
-
-  const closeCameraModal = () => {
-    stopCamera();
-    setCameraOpen(false);
-    setCurrentCapture(null);
-    setLabelInput("");
-    if (capturedPhotos.length > 0 && !activePhotoId) {
-      const first = capturedPhotos.find((p) => !p.saved) || capturedPhotos[0];
-      selectThumbnail(first);
-    }
-  };
-
-  useEffect(() => {
-    if (cameraOpen && !currentCapture) {
-      startCamera();
-    }
-    return () => {
-      if (!cameraOpen) stopCamera();
-    };
-  }, [cameraOpen, currentCapture, startCamera, stopCamera]);
-
-  useEffect(() => {
-    if (!cameraOpen || currentCapture) return;
-    setDetecting(true);
-    const timer = setTimeout(() => {
-      if (videoRef.current && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-          setCurrentCapture(dataUrl);
-          setDetecting(false);
-        }
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [cameraOpen, currentCapture]);
-
-  const saveLabel = () => {
-    if (!currentCapture || !labelInput.trim()) return;
+  const handleSavedCapture = ({ dataUrl, name }: CapturedProduct) => {
     const newPhoto: CapturedPhoto = {
-      id: Date.now().toString(),
-      dataUrl: currentCapture,
-      label: labelInput.trim(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      dataUrl,
+      label: name,
       saved: false,
     };
     setCapturedPhotos((prev) => [...prev, newPhoto]);
-    setCurrentCapture(null);
-    setLabelInput("");
+    setActivePhotoId(newPhoto.id);
+    setForm((prev) => ({ ...prev, name }));
+  };
+
+  const handleContinueFromCamera = () => {
+    setCameraOpen(false);
   };
 
   const selectThumbnail = (photo: CapturedPhoto) => {
