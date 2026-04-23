@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine, Layers } from "lucide-react";
+import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, Layers } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { products } from "@/data/mockData";
+import { products, findProductByName } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
+import { toast } from "@/hooks/use-toast";
 import { registerCartCommit, unregisterCartCommit, type EditCartItem } from "@/pages/EditCartPage";
 
 interface CartItem {
