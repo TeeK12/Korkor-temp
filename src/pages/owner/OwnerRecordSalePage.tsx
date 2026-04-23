@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine, Layers } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { products } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSales, PaymentMethod } from "@/contexts/SalesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import { registerCartCommit, unregisterCartCommit, type EditCartItem } from "@/pages/EditCartPage";
 
 interface CartItem {
   productId: string;
@@ -23,6 +24,7 @@ const paymentOptions: { value: PaymentMethod; label: string }[] = [
 
 const OwnerRecordSalePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { userName } = useAuth();
   const { addSale } = useSales();
   const [tab, setTab] = useState<"search" | "camera">("search");
@@ -38,6 +40,19 @@ const OwnerRecordSalePage = () => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [customerNote, setCustomerNote] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Register a commit handler so the Edit Cart page can write back to us.
+  useEffect(() => {
+    const key = "owner-record-sale";
+    registerCartCommit(key, (next: EditCartItem[]) => setCart(next));
+    return () => unregisterCartCommit(key);
+  }, []);
+
+  // When returning from Edit Cart, jump straight back to the preview screen.
+  useEffect(() => {
+    const fromEdit = (location.state as { fromEditCart?: boolean } | null)?.fromEditCart;
+    if (fromEdit) setShowPreview(true);
+  }, [location.state]);
 
   const filtered = query.length > 0
     ? products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
@@ -183,7 +198,10 @@ const OwnerRecordSalePage = () => {
           </div>
 
           <div className="flex gap-3">
-            <button onClick={() => setShowPreview(false)} className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground">
+            <button
+              onClick={() => navigate("/owner/edit-cart", { state: { cart, returnTo: "/owner/record-sale", cartKey: "owner-record-sale" } })}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground"
+            >
               Edit
             </button>
             <button onClick={handleConfirm} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold">

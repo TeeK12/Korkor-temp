@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine, Layers } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { products } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import AgentBottomNav from "@/components/AgentBottomNav";
+import { registerCartCommit, unregisterCartCommit, type EditCartItem } from "@/pages/EditCartPage";
 
 interface CartItem {
   productId: string;
@@ -22,6 +23,7 @@ interface ProductGroup {
 
 const RecordSalePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthorized, businessName } = useAuth();
   const [tab, setTab] = useState<"search" | "camera">("search");
   const [query, setQuery] = useState("");
@@ -46,6 +48,17 @@ const RecordSalePage = () => {
   const [editingGroup, setEditingGroup] = useState<ProductGroup | null>(null);
   const [selectedGroupProducts, setSelectedGroupProducts] = useState<string[]>([]);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const key = "agent-record-sale";
+    registerCartCommit(key, (next: EditCartItem[]) => setCart(next));
+    return () => unregisterCartCommit(key);
+  }, []);
+
+  useEffect(() => {
+    const fromEdit = (location.state as { fromEditCart?: boolean } | null)?.fromEditCart;
+    if (fromEdit) setShowPreview(true);
+  }, [location.state]);
 
   // Mock agents for collaborator suggestions
   const linkedAgents = [
@@ -351,7 +364,10 @@ const RecordSalePage = () => {
           </div>
 
           <div className="flex gap-3">
-            <button onClick={() => setShowPreview(false)} className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground">
+            <button
+              onClick={() => navigate("/agent/edit-cart", { state: { cart, returnTo: "/agent/record-sale", cartKey: "agent-record-sale" } })}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground"
+            >
               Edit
             </button>
             <button onClick={handleConfirm} className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold">
