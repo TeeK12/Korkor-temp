@@ -1,8 +1,16 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check } from "lucide-react";
+import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check, Plus, ImageIcon } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
-import { products as productStore, type Product } from "@/data/mockData";
+import {
+  products as productStore,
+  type Product,
+  productCategories,
+  customCategoryStore,
+  addCustomCategory,
+  findProductByName,
+  computeStockStatus,
+} from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 
 const baseUnitTypes = ["Carton", "Bag", "Roll", "Piece", "Kg", "Litre", "Yard"];
