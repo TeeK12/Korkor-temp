@@ -116,6 +116,56 @@ const AgentDetailPage = () => {
           </span>
         </button>
 
+        {/* Permissions */}
+        {authorized && (
+          <div className="bg-card rounded-lg p-4 border border-border mb-4">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-3">
+              Permissions
+            </p>
+            <div className="space-y-3">
+              {/* Locked: Record sales */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">Record sales</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Always on while authorized
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Lock className="w-3 h-3" />
+                  <Switch checked disabled />
+                </div>
+              </div>
+              {/* Locked: View inventory */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">View inventory</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Read only
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Lock className="w-3 h-3" />
+                  <Switch checked disabled />
+                </div>
+              </div>
+              {/* Optional: Add products */}
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">Add new products</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Cannot edit or remove existing products
+                  </p>
+                </div>
+                <Switch
+                  checked={perms.addProducts}
+                  onCheckedChange={toggleAddProducts}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex bg-muted rounded-lg p-1 mb-4">
           <button
