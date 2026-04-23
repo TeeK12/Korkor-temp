@@ -251,6 +251,7 @@ const AddProductPage = () => {
     setActivePhotoId(photo.id);
     setForm({
       name: photo.label,
+      category: "",
       buyingUnit: "",
       sellingUnit: "",
       buyingUnitsOrdered: "",
