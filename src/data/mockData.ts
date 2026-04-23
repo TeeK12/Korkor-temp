@@ -49,9 +49,9 @@ export interface FeedItem {
 export const products: Product[] = [
   {
     id: "1", name: "Indomie Chicken (70g)", category: "Provisions",
-    currentStock: 245, buyingUnit: "Carton", sellingUnit: "Piece",
+    currentStock: 245, openingStock: 400, buyingUnit: "Carton", sellingUnit: "Piece",
     unitsPerBuyingUnit: 40, costPrice: 5800, sellingPrice: 200,
-    totalRevenue: 184000, status: "healthy",
+    totalRevenue: 184000, status: "healthy", lastSaleDate: new Date().toISOString(),
     salesHistory: [32, 45, 28, 52, 38, 41, 47],
     stockLog: [
       { date: "Today 2:30 PM", action: "Sold", qty: 12, by: "Chidi" },
@@ -61,9 +61,9 @@ export const products: Product[] = [
   },
   {
     id: "2", name: "Peak Milk (Tin)", category: "Provisions",
-    currentStock: 18, buyingUnit: "Carton", sellingUnit: "Piece",
+    currentStock: 18, openingStock: 48, buyingUnit: "Carton", sellingUnit: "Piece",
     unitsPerBuyingUnit: 24, costPrice: 7200, sellingPrice: 400,
-    totalRevenue: 96000, status: "low",
+    totalRevenue: 96000, status: "low", lastSaleDate: new Date().toISOString(),
     salesHistory: [12, 18, 15, 20, 14, 16, 19],
     stockLog: [
       { date: "Today 1:15 PM", action: "Sold", qty: 4, by: "Chidi" },
@@ -72,9 +72,9 @@ export const products: Product[] = [
   },
   {
     id: "3", name: "Golden Penny Semovita (2kg)", category: "Provisions",
-    currentStock: 62, buyingUnit: "Bag", sellingUnit: "Piece",
+    currentStock: 62, openingStock: 100, buyingUnit: "Bag", sellingUnit: "Piece",
     unitsPerBuyingUnit: 10, costPrice: 12000, sellingPrice: 1500,
-    totalRevenue: 210000, status: "healthy",
+    totalRevenue: 210000, status: "healthy", lastSaleDate: new Date().toISOString(),
     salesHistory: [8, 12, 6, 10, 9, 11, 7],
     stockLog: [
       { date: "Today 3:00 PM", action: "Sold", qty: 3, by: "Chidi" },
@@ -82,9 +82,10 @@ export const products: Product[] = [
   },
   {
     id: "4", name: "Cabin Biscuit", category: "Provisions",
-    currentStock: 48, buyingUnit: "Carton", sellingUnit: "Piece",
+    currentStock: 48, openingStock: 96, buyingUnit: "Carton", sellingUnit: "Piece",
     unitsPerBuyingUnit: 48, costPrice: 4800, sellingPrice: 150,
     totalRevenue: 12000, status: "dead",
+    lastSaleDate: new Date(Date.now() - 35 * 86400000).toISOString(),
     salesHistory: [0, 0, 1, 0, 0, 0, 0],
     stockLog: [
       { date: "9 days ago", action: "Sold", qty: 1, by: "Amaka" },
@@ -92,9 +93,9 @@ export const products: Product[] = [
   },
   {
     id: "5", name: "Dangote Sugar (500g)", category: "Provisions",
-    currentStock: 5, buyingUnit: "Bag", sellingUnit: "Piece",
+    currentStock: 5, openingStock: 60, buyingUnit: "Bag", sellingUnit: "Piece",
     unitsPerBuyingUnit: 20, costPrice: 8500, sellingPrice: 550,
-    totalRevenue: 132000, status: "critical",
+    totalRevenue: 132000, status: "critical", lastSaleDate: new Date().toISOString(),
     salesHistory: [15, 22, 18, 20, 25, 19, 23],
     stockLog: [
       { date: "Today 4:00 PM", action: "Sold", qty: 5, by: "Chidi" },
@@ -103,9 +104,9 @@ export const products: Product[] = [
   },
   {
     id: "6", name: "Bama Mayonnaise (500ml)", category: "Provisions",
-    currentStock: 30, buyingUnit: "Carton", sellingUnit: "Piece",
+    currentStock: 30, openingStock: 36, buyingUnit: "Carton", sellingUnit: "Piece",
     unitsPerBuyingUnit: 12, costPrice: 6000, sellingPrice: 650,
-    totalRevenue: 45500, status: "healthy",
+    totalRevenue: 45500, status: "healthy", lastSaleDate: new Date().toISOString(),
     salesHistory: [5, 3, 7, 4, 6, 5, 4],
     stockLog: [
       { date: "Today 1:00 PM", action: "Sold", qty: 2, by: "Chidi" },
