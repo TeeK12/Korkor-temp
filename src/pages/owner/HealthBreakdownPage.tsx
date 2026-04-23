@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, Target, Sparkles, Loader2, Package, Banknote, HandCoins, Clock, Store, GitCompare, Landmark, Building2 } from "lucide-react";
-import { products } from "@/data/mockData";
+import { products, computeStockStatus } from "@/data/mockData";
 import { distributors } from "@/data/distributors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useExpenses } from "@/contexts/ExpensesContext";
