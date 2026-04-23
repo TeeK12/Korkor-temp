@@ -99,16 +99,10 @@ const ReadOnlyField = ({ label, value, color = "text-foreground" }: { label: str
 
 const AddProductPage = () => {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
-  // Camera modal state
+  // Camera flow state — fully delegated to <ProductCameraFlow />
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([]);
-  const [currentCapture, setCurrentCapture] = useState<string | null>(null);
-  const [labelInput, setLabelInput] = useState("");
-  const [detecting, setDetecting] = useState(false);
 
   // Active product form (selected thumbnail)
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
