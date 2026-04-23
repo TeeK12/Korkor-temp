@@ -60,7 +60,8 @@ const DistributorAddProductPage = () => {
     restoredDraft?.paymentMethods ?? existing?.paymentMethods ?? ["Cash", "Bank Transfer"]
   );
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedPhotos, setCapturedPhotos] = useState<{ id: string; dataUrl: string; label: string }[]>([]);
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCat, setNewCat] = useState("");
 
