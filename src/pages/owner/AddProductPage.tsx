@@ -325,62 +325,13 @@ const AddProductPage = () => {
           </div>
         )}
 
-        {/* Camera Modal */}
-        {cameraOpen && (
-          <div className="fixed inset-0 z-50 bg-background flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <span className="text-base font-bold text-foreground">Capture Products</span>
-              <button onClick={closeCameraModal} className="text-muted-foreground">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            {capturedPhotos.length > 0 && (
-              <div className="absolute top-4 right-14 z-10 bg-primary text-primary-foreground text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
-                {capturedPhotos.length}
-              </div>
-            )}
-            <div className="flex-1 relative overflow-hidden">
-              {!currentCapture ? (
-                <>
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={`w-56 h-56 border-2 rounded-xl ${detecting ? "border-primary animate-pulse" : "border-muted-foreground/40"}`} />
-                  </div>
-                  <div className="absolute bottom-8 left-0 right-0 text-center">
-                    <span className="text-xs text-muted-foreground bg-background/70 px-3 py-1.5 rounded-full">
-                      {detecting ? "Detecting product…" : "Point camera at product"}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="w-full h-full relative">
-                  <img src={currentCapture} alt="Captured" className="w-full h-full object-cover" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/90 to-transparent">
-                    <label className="text-sm font-medium text-foreground block mb-2">Name this product</label>
-                    <input
-                      type="text"
-                      value={labelInput}
-                      onChange={(e) => setLabelInput(e.target.value)}
-                      placeholder="Name this product"
-                      autoFocus
-                      className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary mb-3"
-                    />
-                    <button onClick={saveLabel} disabled={!labelInput.trim()}
-                      className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40">
-                      Save & Capture Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="px-4 py-4">
-              <button onClick={closeCameraModal} className="w-full h-12 rounded-lg border border-border bg-card text-foreground font-semibold text-sm">
-                Done ({capturedPhotos.length} product{capturedPhotos.length !== 1 ? "s" : ""})
-              </button>
-            </div>
-          </div>
-        )}
+        {/* New strict camera flow */}
+        <ProductCameraFlow
+          open={cameraOpen}
+          onClose={() => setCameraOpen(false)}
+          onSavedCapture={handleSavedCapture}
+          onContinue={handleContinueFromCamera}
+        />
 
         <div className="space-y-4">
           {/* Product Info */}
