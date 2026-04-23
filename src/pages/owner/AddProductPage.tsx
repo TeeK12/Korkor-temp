@@ -1,7 +1,8 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check, Plus, ImageIcon } from "lucide-react";
+import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, Check, Plus } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
 import {
   products as productStore,
   type Product,
@@ -9,7 +10,6 @@ import {
   customCategoryStore,
   addCustomCategory,
   findProductByName,
-  computeStockStatus,
 } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 
@@ -99,16 +99,10 @@ const ReadOnlyField = ({ label, value, color = "text-foreground" }: { label: str
 
 const AddProductPage = () => {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
-  // Camera modal state
+  // Camera flow state — fully delegated to <ProductCameraFlow />
   const [cameraOpen, setCameraOpen] = useState(false);
   const [capturedPhotos, setCapturedPhotos] = useState<CapturedPhoto[]>([]);
-  const [currentCapture, setCurrentCapture] = useState<string | null>(null);
-  const [labelInput, setLabelInput] = useState("");
-  const [detecting, setDetecting] = useState(false);
 
   // Active product form (selected thumbnail)
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
@@ -166,85 +160,23 @@ const AddProductPage = () => {
     update(target, name);
   };
 
-  // Camera functions
-  const startCamera = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch {
-      console.error("Camera access denied");
-    }
-  }, []);
+  // Open / close handled by ProductCameraFlow; we just toggle a flag.
+  const openCameraModal = () => setCameraOpen(true);
 
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-  }, []);
-
-  const openCameraModal = () => {
-    setCameraOpen(true);
-    setCurrentCapture(null);
-    setLabelInput("");
-  };
-
-  const closeCameraModal = () => {
-    stopCamera();
-    setCameraOpen(false);
-    setCurrentCapture(null);
-    setLabelInput("");
-    if (capturedPhotos.length > 0 && !activePhotoId) {
-      const first = capturedPhotos.find((p) => !p.saved) || capturedPhotos[0];
-      selectThumbnail(first);
-    }
-  };
-
-  useEffect(() => {
-    if (cameraOpen && !currentCapture) {
-      startCamera();
-    }
-    return () => {
-      if (!cameraOpen) stopCamera();
-    };
-  }, [cameraOpen, currentCapture, startCamera, stopCamera]);
-
-  useEffect(() => {
-    if (!cameraOpen || currentCapture) return;
-    setDetecting(true);
-    const timer = setTimeout(() => {
-      if (videoRef.current && canvasRef.current) {
-        const canvas = canvasRef.current;
-        const video = videoRef.current;
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-          setCurrentCapture(dataUrl);
-          setDetecting(false);
-        }
-      }
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [cameraOpen, currentCapture]);
-
-  const saveLabel = () => {
-    if (!currentCapture || !labelInput.trim()) return;
+  const handleSavedCapture = ({ dataUrl, name }: CapturedProduct) => {
     const newPhoto: CapturedPhoto = {
-      id: Date.now().toString(),
-      dataUrl: currentCapture,
-      label: labelInput.trim(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      dataUrl,
+      label: name,
       saved: false,
     };
     setCapturedPhotos((prev) => [...prev, newPhoto]);
-    setCurrentCapture(null);
-    setLabelInput("");
+    setActivePhotoId(newPhoto.id);
+    setForm((prev) => ({ ...prev, name }));
+  };
+
+  const handleContinueFromCamera = () => {
+    setCameraOpen(false);
   };
 
   const selectThumbnail = (photo: CapturedPhoto) => {
@@ -325,7 +257,7 @@ const AddProductPage = () => {
     const newProduct: Product = {
       id: `p-${Date.now()}`,
       name: form.name.trim(),
-      category: "Provisions",
+      category: form.category || "Uncategorized",
       currentStock: Math.round(calc.openingStock),
       buyingUnit: form.buyingUnit,
       sellingUnit: form.sellingUnit,
@@ -393,67 +325,83 @@ const AddProductPage = () => {
           </div>
         )}
 
-        {/* Camera Modal */}
-        {cameraOpen && (
-          <div className="fixed inset-0 z-50 bg-background flex flex-col">
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <span className="text-base font-bold text-foreground">Capture Products</span>
-              <button onClick={closeCameraModal} className="text-muted-foreground">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            {capturedPhotos.length > 0 && (
-              <div className="absolute top-4 right-14 z-10 bg-primary text-primary-foreground text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
-                {capturedPhotos.length}
-              </div>
-            )}
-            <div className="flex-1 relative overflow-hidden">
-              {!currentCapture ? (
-                <>
-                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                  <canvas ref={canvasRef} className="hidden" />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className={`w-56 h-56 border-2 rounded-xl ${detecting ? "border-primary animate-pulse" : "border-muted-foreground/40"}`} />
-                  </div>
-                  <div className="absolute bottom-8 left-0 right-0 text-center">
-                    <span className="text-xs text-muted-foreground bg-background/70 px-3 py-1.5 rounded-full">
-                      {detecting ? "Detecting product…" : "Point camera at product"}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="w-full h-full relative">
-                  <img src={currentCapture} alt="Captured" className="w-full h-full object-cover" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/90 to-transparent">
-                    <label className="text-sm font-medium text-foreground block mb-2">Name this product</label>
-                    <input
-                      type="text"
-                      value={labelInput}
-                      onChange={(e) => setLabelInput(e.target.value)}
-                      placeholder="Name this product"
-                      autoFocus
-                      className="w-full h-12 px-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary mb-3"
-                    />
-                    <button onClick={saveLabel} disabled={!labelInput.trim()}
-                      className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-40">
-                      Save & Capture Next
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="px-4 py-4">
-              <button onClick={closeCameraModal} className="w-full h-12 rounded-lg border border-border bg-card text-foreground font-semibold text-sm">
-                Done ({capturedPhotos.length} product{capturedPhotos.length !== 1 ? "s" : ""})
-              </button>
-            </div>
-          </div>
-        )}
+        {/* New strict camera flow */}
+        <ProductCameraFlow
+          open={cameraOpen}
+          onClose={() => setCameraOpen(false)}
+          onSavedCapture={handleSavedCapture}
+          onContinue={handleContinueFromCamera}
+        />
 
         <div className="space-y-4">
           {/* Product Info */}
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Product Info</p>
           <TextField label="Product Name" placeholder="e.g. Indomie Chicken (70g)" value={form.name} onChange={(v) => update("name", v)} error={errors.name} />
+
+          {/* Category with inline "+ Add new" */}
+          <div>
+            <label className="text-sm font-medium text-foreground block mb-1.5">Category</label>
+            {showCustomCatInput ? (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={customCatInput}
+                  onChange={(e) => setCustomCatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") addCustomCat();
+                    if (e.key === "Escape") { setShowCustomCatInput(false); setCustomCatInput(""); }
+                  }}
+                  placeholder="New category name"
+                  className="flex-1 h-12 px-4 rounded-lg border border-input bg-card text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="button"
+                  onClick={addCustomCat}
+                  disabled={!customCatInput.trim()}
+                  className="h-12 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-40"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCustomCatInput(false); setCustomCatInput(""); }}
+                  className="h-12 px-3 rounded-lg border border-input text-muted-foreground text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <select
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === "__add__") {
+                      setShowCustomCatInput(true);
+                      return;
+                    }
+                    update("category", e.target.value);
+                  }}
+                  className="w-full h-12 pl-4 pr-20 rounded-lg border border-input bg-card text-foreground text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Select category</option>
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                  <option value="__add__">+ Add new category…</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomCatInput(true)}
+                  aria-label="Add new category"
+                  className="absolute right-10 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <ChevronDown className="w-4 h-4 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <SelectField

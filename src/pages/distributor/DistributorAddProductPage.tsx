@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Check } from "lucide-react";
+import { ArrowLeft, Plus, Check, Camera } from "lucide-react";
 import { useDistributor, GoodwillConditions } from "@/contexts/DistributorContext";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
 import { toast } from "sonner";
 
 const BASE_CATEGORIES = ["Dairy", "Beverages", "Grains", "Provisions", "Cosmetics", "Electronics", "Building Materials"];
@@ -58,6 +59,8 @@ const DistributorAddProductPage = () => {
   const [paymentMethods, setPaymentMethods] = useState<string[]>(
     restoredDraft?.paymentMethods ?? existing?.paymentMethods ?? ["Cash", "Bank Transfer"]
   );
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [showAddCat, setShowAddCat] = useState(false);
   const [newCat, setNewCat] = useState("");
 
@@ -161,6 +164,33 @@ const DistributorAddProductPage = () => {
         <h1 className="text-2xl font-bold text-foreground mb-6">{isEdit ? "Edit Product" : "Add Product"}</h1>
 
         <div className="space-y-4">
+          {!isEdit && (
+            <button
+              type="button"
+              onClick={() => setCameraOpen(true)}
+              className="w-full h-28 rounded-lg border-2 border-dashed border-border bg-card flex flex-col items-center justify-center gap-2 overflow-hidden relative"
+            >
+              {capturedImage ? (
+                <img src={capturedImage} alt="Captured" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <>
+                  <Camera className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Tap to capture product photo</span>
+                </>
+              )}
+            </button>
+          )}
+
+          <ProductCameraFlow
+            open={cameraOpen}
+            onClose={() => setCameraOpen(false)}
+            onContinue={({ dataUrl, name }: CapturedProduct) => {
+              setCapturedImage(dataUrl);
+              setForm((p) => ({ ...p, name }));
+              setCameraOpen(false);
+            }}
+          />
+
           <div>
             <label className="text-sm font-medium text-foreground block mb-1.5">Product Name</label>
             <input
