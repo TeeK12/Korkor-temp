@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Mic, Eye, Play, Pause, Shield, ShieldOff } from "lucide-react";
+import { ArrowLeft, Mic, Eye, Play, Pause, Shield, ShieldOff, Lock } from "lucide-react";
 import { agents } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  getAgentPermissions,
+  setAgentPermissions,
+  setAgentAuthorization,
+  isAgentAuthorized,
+} from "@/data/subAccountStore";
+import { Switch } from "@/components/ui/switch";
 
 interface AgentRec {
   id: string;
@@ -18,15 +25,29 @@ const AgentDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { businessName } = useAuth();
+  const businessId = businessName || "default-business";
   const agent = agents.find((a) => a.id === id);
   const [activeTab, setActiveTab] = useState<"activity" | "recommendations">("activity");
-  const [authorized, setAuthorized] = useState(true);
+  const [authorized, setAuthorized] = useState<boolean>(() =>
+    isAgentAuthorized(businessId, id || "", ["1", "2"].includes(id || "")),
+  );
+  const [perms, setPerms] = useState(() =>
+    getAgentPermissions(businessId, id || ""),
+  );
   const [recs, setRecs] = useState<AgentRec[]>([
     { id: "1", text: "Customers keep asking for Dano Cool Cow milk. We should stock it.", hasVoice: false, time: "Yesterday", seen: false, agentName: agent?.name || "Agent" },
     { id: "2", text: "The Dangote Sugar 500g is almost finished but many people are coming for it.", hasVoice: false, time: "2 days ago", seen: true, agentName: agent?.name || "Agent" },
     { id: "3", text: "", hasVoice: true, time: "3 days ago", seen: false, agentName: agent?.name || "Agent" },
   ]);
   const [playingId, setPlayingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setPerms(getAgentPermissions(businessId, id));
+    setAuthorized(
+      isAgentAuthorized(businessId, id, ["1", "2"].includes(id)),
+    );
+  }, [businessId, id]);
 
   if (!agent) {
     return (
@@ -41,7 +62,17 @@ const AgentDetailPage = () => {
   };
 
   const toggleAuthorization = () => {
-    setAuthorized(!authorized);
+    if (!id) return;
+    const next = !authorized;
+    setAgentAuthorization(businessId, id, next);
+    setAuthorized(next);
+    if (!next) setPerms(getAgentPermissions(businessId, id));
+  };
+
+  const toggleAddProducts = (value: boolean) => {
+    if (!id) return;
+    const next = setAgentPermissions(businessId, id, { addProducts: value });
+    setPerms(next);
   };
 
   const perfData = [12, 18, 8, 22, 14, 16, agent.todaySales];
