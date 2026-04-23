@@ -141,19 +141,22 @@ const ProductCameraFlow = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
+    <div
+      className="fixed inset-0 z-[60] bg-black"
+      style={{ height: "100dvh" }}
+    >
       {/* Cancel — only chrome visible during scanning */}
       <button
         onClick={handleCancel}
         aria-label="Cancel"
-        className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white"
+        className="absolute top-4 right-4 z-30 w-10 h-10 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-white"
       >
         <X className="w-5 h-5" />
       </button>
 
       {/* Stage 1: live scanning */}
       {stage === "scanning" && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           {cameraError ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center text-white">
               <p className="text-sm mb-4">{cameraError}</p>
@@ -189,17 +192,20 @@ const ProductCameraFlow = ({
 
       {/* Stage 2/3/4: frozen image */}
       {stage !== "scanning" && captured && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           <img src={captured} alt="Captured product" className="w-full h-full object-cover" />
         </div>
       )}
 
       {/* Shutter flash */}
-      {shutter && <div className="absolute inset-0 bg-white animate-fade-in pointer-events-none" />}
+      {shutter && <div className="absolute inset-0 z-10 bg-white animate-fade-in pointer-events-none" />}
 
       {/* Stage 3: name input slides up */}
       {stage === "naming" && (
-        <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/85 to-transparent animate-slide-up">
+        <div
+          className="absolute left-0 right-0 z-20 p-5 pt-6 bg-black/95 backdrop-blur animate-slide-up"
+          style={{ bottom: 0, paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}
+        >
           <input
             ref={inputRef}
             type="text"
@@ -223,7 +229,10 @@ const ProductCameraFlow = ({
 
       {/* Stage 4: two buttons */}
       {stage === "actions" && (
-        <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black via-black/85 to-transparent animate-fade-in">
+        <div
+          className="absolute left-0 right-0 z-20 p-5 pt-6 bg-black/95 backdrop-blur animate-fade-in"
+          style={{ bottom: 0, paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}
+        >
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={handleCaptureAnother}
