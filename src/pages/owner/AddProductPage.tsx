@@ -119,6 +119,7 @@ const AddProductPage = () => {
 
   const [form, setForm] = useState({
     name: "",
+    category: "",
     buyingUnit: "",
     sellingUnit: "",
     buyingUnitsOrdered: "",       // NEW (was quantityOrdered)
@@ -128,6 +129,26 @@ const AddProductPage = () => {
     actualSellingPrice: "",
     applyPriceToCurrent: false,
   });
+
+  // FIX 5 — categories
+  const [customCats, setCustomCats] = useState<string[]>([...customCategoryStore]);
+  const [showCustomCatInput, setShowCustomCatInput] = useState(false);
+  const [customCatInput, setCustomCatInput] = useState("");
+  const allCategories = useMemo(() => [...productCategories, ...customCats], [customCats]);
+
+  const addCustomCat = () => {
+    const added = addCustomCategory(customCatInput);
+    if (added) {
+      setCustomCats([...customCategoryStore]);
+      setForm((p) => ({ ...p, category: added }));
+    }
+    setCustomCatInput("");
+    setShowCustomCatInput(false);
+  };
+
+  // FIX 4 — duplicate product detection. When the typed name matches an
+  // existing product we surface a banner offering to merge into existing stock.
+  const existingMatch = useMemo(() => findProductByName(form.name), [form.name]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
