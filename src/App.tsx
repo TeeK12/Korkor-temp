@@ -47,6 +47,12 @@ import OwnerOrderDetailPage from "./pages/owner/OwnerOrderDetailPage";
 import EditCartPage from "./pages/EditCartPage";
 import BillingPage from "./pages/owner/BillingPage";
 import UnlockAgentsPage from "./pages/owner/UnlockAgentsPage";
+import PartnersPage from "./pages/owner/PartnersPage";
+import BusinessProfilePage from "./pages/owner/BusinessProfilePage";
+import AccountSettingsPage from "./pages/owner/AccountSettingsPage";
+import NotificationsSettingsPage from "./pages/owner/NotificationsSettingsPage";
+import PrivacySecurityPage from "./pages/owner/PrivacySecurityPage";
+import AboutBulkbookPage from "./pages/owner/AboutBulkbookPage";
 
 // Agent pages
 import AgentHomePage from "./pages/agent/AgentHomePage";
@@ -141,6 +147,12 @@ const App = () => (
                       <Route path="/owner/edit-cart" element={<EditCartPage />} />
                       <Route path="/owner/billing" element={<BillingPage />} />
                       <Route path="/owner/billing/unlock-agents" element={<UnlockAgentsPage />} />
+                      <Route path="/owner/settings/business-profile" element={<BusinessProfilePage />} />
+                      <Route path="/owner/settings/account" element={<AccountSettingsPage />} />
+                      <Route path="/owner/settings/notifications" element={<NotificationsSettingsPage />} />
+                      <Route path="/owner/settings/privacy" element={<PrivacySecurityPage />} />
+                      <Route path="/owner/settings/partners" element={<PartnersPage />} />
+                      <Route path="/owner/settings/about" element={<AboutBulkbookPage />} />
 
                       {/* Agent */}
                       <Route path="/agent" element={<AgentHomePage />} />
