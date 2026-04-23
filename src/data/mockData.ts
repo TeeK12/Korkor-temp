@@ -183,3 +183,69 @@ export const nigerianStates = [
   "Lagos", "Abuja", "Kano", "Rivers", "Oyo", "Anambra", "Kaduna", "Ogun", "Enugu", "Delta",
   "Edo", "Imo", "Kwara", "Osun", "Ondo", "Abia", "Cross River", "Akwa Ibom", "Bayelsa", "Other",
 ];
+
+// Predefined product categories used in the owner Add Product flow.
+// "+" (custom) is rendered separately by the UI.
+export const productCategories: string[] = [
+  "Dairy", "Beverages", "Grains", "Provisions", "Cosmetics",
+  "Electronics", "Building Materials", "Fresh Food", "Frozen Food",
+  "Clothing", "Household", "Stationery",
+];
+
+/** Custom categories added at runtime by the owner. Persists for the session. */
+export const customCategoryStore: string[] = [];
+
+export const addCustomCategory = (name: string): string | null => {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const exists = [...productCategories, ...customCategoryStore]
+    .some((c) => c.toLowerCase() === trimmed.toLowerCase());
+  if (exists) return trimmed;
+  customCategoryStore.push(trimmed);
+  return trimmed;
+};
+
+/* ============================================================
+ * Stock status thresholds (single source of truth)
+ * Healthy:  currentStock > 50% of openingStock
+ * Low:      currentStock <= 50% of openingStock
+ * Critical: currentStock <= 20% of openingStock
+ * Dead:     no recorded sales for 30 consecutive days, regardless of stock
+ * ============================================================ */
+export const STOCK_LOW_PCT = 0.5;
+export const STOCK_CRITICAL_PCT = 0.2;
+export const DEAD_STOCK_DAYS = 30;
+
+/** Returns the canonical stock status given a product. */
+export const computeStockStatus = (
+  p: Pick<Product, "currentStock" | "openingStock" | "salesHistory" | "lastSaleDate">,
+): Product["status"] => {
+  // Dead-stock detection wins regardless of stock level.
+  if (p.lastSaleDate) {
+    const last = new Date(p.lastSaleDate).getTime();
+    if (!Number.isNaN(last)) {
+      const daysSince = (Date.now() - last) / (1000 * 60 * 60 * 24);
+      if (daysSince >= DEAD_STOCK_DAYS) return "dead";
+    }
+  } else {
+    // No lastSaleDate AND zero sales recorded across the whole history → treat as dead
+    const totalSales = p.salesHistory?.reduce((s, v) => s + v, 0) ?? 0;
+    if (totalSales === 0) return "dead";
+  }
+
+  // Use openingStock if present, otherwise fall back to currentStock (always healthy on new items)
+  const opening = p.openingStock && p.openingStock > 0 ? p.openingStock : p.currentStock;
+  if (opening <= 0) return "dead";
+
+  const ratio = p.currentStock / opening;
+  if (ratio <= STOCK_CRITICAL_PCT) return "critical";
+  if (ratio <= STOCK_LOW_PCT) return "low";
+  return "healthy";
+};
+
+/** Find an existing product by case-insensitive trimmed name match. */
+export const findProductByName = (name: string): Product | undefined => {
+  const needle = name.trim().toLowerCase();
+  if (!needle) return undefined;
+  return products.find((p) => p.name.trim().toLowerCase() === needle);
+};
