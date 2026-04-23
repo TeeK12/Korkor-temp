@@ -1,8 +1,16 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check } from "lucide-react";
+import { ArrowLeft, ChevronDown, Camera, TrendingUp, TrendingDown, X, Check, Plus, ImageIcon } from "lucide-react";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
-import { products as productStore, type Product } from "@/data/mockData";
+import {
+  products as productStore,
+  type Product,
+  productCategories,
+  customCategoryStore,
+  addCustomCategory,
+  findProductByName,
+  computeStockStatus,
+} from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
 
 const baseUnitTypes = ["Carton", "Bag", "Roll", "Piece", "Kg", "Litre", "Yard"];
@@ -111,6 +119,7 @@ const AddProductPage = () => {
 
   const [form, setForm] = useState({
     name: "",
+    category: "",
     buyingUnit: "",
     sellingUnit: "",
     buyingUnitsOrdered: "",       // NEW (was quantityOrdered)
@@ -120,6 +129,26 @@ const AddProductPage = () => {
     actualSellingPrice: "",
     applyPriceToCurrent: false,
   });
+
+  // FIX 5 — categories
+  const [customCats, setCustomCats] = useState<string[]>([...customCategoryStore]);
+  const [showCustomCatInput, setShowCustomCatInput] = useState(false);
+  const [customCatInput, setCustomCatInput] = useState("");
+  const allCategories = useMemo(() => [...productCategories, ...customCats], [customCats]);
+
+  const addCustomCat = () => {
+    const added = addCustomCategory(customCatInput);
+    if (added) {
+      setCustomCats([...customCategoryStore]);
+      setForm((p) => ({ ...p, category: added }));
+    }
+    setCustomCatInput("");
+    setShowCustomCatInput(false);
+  };
+
+  // FIX 4 — duplicate product detection. When the typed name matches an
+  // existing product we surface a banner offering to merge into existing stock.
+  const existingMatch = useMemo(() => findProductByName(form.name), [form.name]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 

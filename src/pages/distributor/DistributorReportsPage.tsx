@@ -77,7 +77,7 @@ const DistributorReportsPage = () => {
             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <Zap className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold text-foreground">AI Summary</span>
+            <span className="text-sm font-semibold text-foreground">Summary</span>
           </div>
           <p className="text-sm text-foreground leading-relaxed">
             <strong>Mama Nkechi Provisions</strong> has sold 80% of the Peak Milk you sent on goodwill. 

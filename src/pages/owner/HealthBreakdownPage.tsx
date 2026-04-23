@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, Target, Sparkles, Loader2, Package, Banknote, HandCoins, Clock, Store, GitCompare, Landmark, Building2 } from "lucide-react";
-import { products } from "@/data/mockData";
+import { products, computeStockStatus } from "@/data/mockData";
 import { distributors } from "@/data/distributors";
 import { useAuth } from "@/contexts/AuthContext";
 import { useExpenses } from "@/contexts/ExpensesContext";
@@ -24,10 +24,11 @@ const HealthBreakdownPage = () => {
   const [targetConfirmed, setTargetConfirmed] = useState(false);
 
   // ASSETS
-  const stockValue = products.reduce(
+  const productsWithStatus = products.map((p) => ({ ...p, status: computeStockStatus(p) }));
+  const stockValue = productsWithStatus.reduce(
     (s, p) => s + p.currentStock * (p.costPrice / p.unitsPerBuyingUnit), 0
   );
-  const goodsNotMoving = products
+  const goodsNotMoving = productsWithStatus
     .filter((p) => p.status === "dead")
     .reduce((s, p) => s + p.currentStock * (p.costPrice / p.unitsPerBuyingUnit), 0);
   const cashInHand = getCashInHand();

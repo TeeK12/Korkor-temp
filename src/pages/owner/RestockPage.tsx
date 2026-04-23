@@ -1,12 +1,18 @@
-import { Package, Check } from "lucide-react";
-import { products } from "@/data/mockData";
+import { Package, Check, ArrowLeft } from "lucide-react";
+import { products, computeStockStatus } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useMemo } from "react";
 
 const RestockPage = () => {
   const navigate = useNavigate();
-  const restockItems = products.filter((p) => p.status === "low" || p.status === "critical");
+  const restockItems = useMemo(
+    () =>
+      products
+        .map((p) => ({ ...p, status: computeStockStatus(p) }))
+        .filter((p) => p.status === "low" || p.status === "critical"),
+    [],
+  );
 
   return (
     <div className="app-shell dark bg-background">
