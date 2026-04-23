@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Plus, Package, TrendingUp } from "lucide-react";
-import { products } from "@/data/mockData";
+import { products, computeStockStatus, type Product } from "@/data/mockData";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
 
 const statusColors: Record<string, string> = {
@@ -18,8 +18,15 @@ const InventoryPage = () => {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
 
+  // Always derive status from the canonical helper so badges stay in sync
+  // with stock changes anywhere in the app.
+  const productsWithStatus = useMemo(
+    () => products.map((p) => ({ ...p, status: computeStockStatus(p) as Product["status"] })),
+    [],
+  );
+
   const filtered = useMemo(() => {
-    let list = products.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+    let list = productsWithStatus.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
 
     if (filter === "low") {
       list = list.filter((p) => p.status === "low" || p.status === "critical");
@@ -44,7 +51,7 @@ const InventoryPage = () => {
     }
 
     return list;
-  }, [query, filter]);
+  }, [query, filter, productsWithStatus]);
 
   const getTotalUnitsSold = (p: typeof products[0]) =>
     p.salesHistory.reduce((s, v) => s + v, 0);

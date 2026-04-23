@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Bell, Settings, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, ShoppingCart, Receipt, Plus, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { products } from "@/data/mockData";
+import { products, computeStockStatus } from "@/data/mockData";
 import { distributorFeedItems } from "@/data/distributors";
+import { useMemo } from "react";
 import { useExpenses } from "@/contexts/ExpensesContext";
 import { useCart } from "@/contexts/CartContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
@@ -15,9 +16,13 @@ const OwnerDashboard = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  const topMovers = products.filter((p) => p.status === "healthy").slice(0, 3);
-  const deadStock = products.filter((p) => p.status === "dead");
-  const restockItems = products.filter((p) => p.status === "low" || p.status === "critical");
+  const productsWithStatus = useMemo(
+    () => products.map((p) => ({ ...p, status: computeStockStatus(p) })),
+    [],
+  );
+  const topMovers = productsWithStatus.filter((p) => p.status === "healthy").slice(0, 3);
+  const deadStock = productsWithStatus.filter((p) => p.status === "dead");
+  const restockItems = productsWithStatus.filter((p) => p.status === "low" || p.status === "critical");
   const todayRevenue = products.reduce((s, p) => s + p.salesHistory[6] * p.sellingPrice, 0);
   const todayCost = products.reduce((s, p) => s + p.salesHistory[6] * (p.costPrice / p.unitsPerBuyingUnit), 0);
   const todaysExpenses = getTodaysExpenses();
@@ -73,7 +78,7 @@ const OwnerDashboard = () => {
             <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
               <Zap className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="text-sm font-semibold text-foreground">AI Daily Brief</span>
+            <span className="text-sm font-semibold text-foreground">Daily Brief</span>
           </div>
           <p className="text-sm text-foreground leading-relaxed">
             Your best seller today is <strong>Indomie</strong>. You are running low on <strong>Peak Milk</strong>. 
