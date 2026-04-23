@@ -3,7 +3,8 @@ export interface Product {
   name: string;
   category: string;
   currentStock: number;
-  openingStock: number;
+  /** Original full stock when this batch was added (used for % thresholds). Optional for legacy data. */
+  openingStock?: number;
   buyingUnit: string;
   sellingUnit: string;
   unitsPerBuyingUnit: number;
