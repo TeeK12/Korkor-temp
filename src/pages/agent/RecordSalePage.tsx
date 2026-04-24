@@ -93,22 +93,15 @@ const RecordSalePage = () => {
     }
   }, [tab]);
 
-  // Open the new strict camera flow whenever the Camera tab is selected.
-  useEffect(() => {
-    if (tab === "camera") {
-      setCameraOpen(true);
-    }
-  }, [tab]);
-
   const handleCameraContinue = ({ name }: CapturedProduct) => {
     setCameraOpen(false);
-    setTab("search");
     const match = findProductByName(name);
     if (match) {
       addToCart(match, 1);
       toast({ title: "Added to cart", description: `${match.name} added.` });
     } else {
       setQuery(name);
+      setTab("search");
       toast({
         title: "Product not found",
         description: `“${name}” is not in your inventory yet. Search or add it first.`,

@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine, Layers } from "lucide-react";
+import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { products } from "@/data/mockData";
+import { products, findProductByName } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSales, PaymentMethod } from "@/contexts/SalesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
+import { toast } from "@/hooks/use-toast";
 import { registerCartCommit, unregisterCartCommit, type EditCartItem } from "@/pages/EditCartPage";
 
 interface CartItem {
@@ -34,9 +36,7 @@ const OwnerRecordSalePage = () => {
   const [qty, setQty] = useState("1");
   const [showPreview, setShowPreview] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [cameraProduct, setCameraProduct] = useState<typeof products[0] | null>(null);
-  const [cameraQty, setCameraQty] = useState(1);
-  const [scanning, setScanning] = useState(true);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [customerNote, setCustomerNote] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -62,17 +62,6 @@ const OwnerRecordSalePage = () => {
     if (tab === "search" && searchRef.current) searchRef.current.focus();
   }, [tab]);
 
-  useEffect(() => {
-    if (tab === "camera" && scanning) {
-      const timer = setTimeout(() => {
-        setCameraProduct(products[Math.floor(Math.random() * products.length)]);
-        setCameraQty(1);
-        setScanning(false);
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [tab, scanning]);
-
   const addToCart = (product: typeof products[0], quantity: number) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.productId === product.id);
@@ -83,6 +72,22 @@ const OwnerRecordSalePage = () => {
 
   const removeFromCart = (productId: string) => setCart((prev) => prev.filter((c) => c.productId !== productId));
 
+  const handleCameraContinue = ({ name }: CapturedProduct) => {
+    setCameraOpen(false);
+    const match = findProductByName(name);
+    if (match) {
+      addToCart(match, 1);
+      toast({ title: "Added to cart", description: `${match.name} added.` });
+    } else {
+      setQuery(name);
+      setTab("search");
+      toast({
+        title: "Product not found",
+        description: `“${name}” is not in your inventory yet. Search or add it first.`,
+      });
+    }
+  };
+
   const handleSearchAdd = () => {
     if (!selectedProduct || !qty || parseInt(qty) < 1) return;
     addToCart(selectedProduct, parseInt(qty));
@@ -90,13 +95,6 @@ const OwnerRecordSalePage = () => {
     setQty("1");
     setQuery("");
     searchRef.current?.focus();
-  };
-
-  const handleCameraAdd = () => {
-    if (!cameraProduct) return;
-    addToCart(cameraProduct, cameraQty);
-    setCameraProduct(null);
-    setScanning(true);
   };
 
   const grandTotal = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
@@ -256,43 +254,22 @@ const OwnerRecordSalePage = () => {
 
         {tab === "camera" && (
           <div className="mb-4">
-            <div className="relative bg-foreground/5 rounded-2xl overflow-hidden aspect-[3/4] flex items-center justify-center mb-4">
-              <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 to-foreground/5" />
-              <div className="relative w-48 h-48 border-2 border-primary/60 rounded-2xl">
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-primary rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-primary rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-primary rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-primary rounded-br-lg" />
-                {scanning && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <ScanLine className="w-8 h-8 text-primary animate-pulse" />
-                    <p className="text-xs text-muted-foreground mt-2">Scanning...</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {cameraProduct && (
-              <div className="bg-card rounded-2xl p-4 border border-border animate-fade-in">
-                <p className="text-sm font-semibold text-foreground mb-1">{cameraProduct.name}</p>
-                <p className="text-xs text-muted-foreground mb-3">₦{cameraProduct.sellingPrice} per {cameraProduct.sellingUnit}</p>
-                <div className="flex items-center gap-4 mb-3">
-                  <button onClick={() => setCameraQty(Math.max(1, cameraQty - 1))} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                    <Minus className="w-4 h-4 text-foreground" />
-                  </button>
-                  <span className="text-lg font-bold text-foreground">{cameraQty}</span>
-                  <button onClick={() => setCameraQty(cameraQty + 1)} className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-primary-foreground" />
-                  </button>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => { setCameraProduct(null); setScanning(true); }} className="flex-1 py-2 rounded-xl border border-border text-sm text-foreground">Skip</button>
-                  <button onClick={handleCameraAdd} className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-bold">Add</button>
-                </div>
-              </div>
-            )}
+            <button
+              onClick={() => setCameraOpen(true)}
+              className="w-full aspect-[3/4] rounded-2xl bg-foreground/5 border border-border flex flex-col items-center justify-center gap-2"
+            >
+              <Camera className="w-10 h-10 text-primary" />
+              <span className="text-sm font-semibold text-foreground">Open camera</span>
+              <span className="text-xs text-muted-foreground">Tap to scan a product</span>
+            </button>
           </div>
         )}
+
+        <ProductCameraFlow
+          open={cameraOpen}
+          onClose={() => { setCameraOpen(false); setTab("search"); }}
+          onContinue={handleCameraContinue}
+        />
 
         {tab === "search" && (
           <div className="mb-4">
