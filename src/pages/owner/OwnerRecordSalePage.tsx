@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check, ScanLine, Layers } from "lucide-react";
+import { ArrowLeft, Camera, Search, Plus, Minus, X, ShoppingCart, Check } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { products } from "@/data/mockData";
+import { products, findProductByName } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSales, PaymentMethod } from "@/contexts/SalesContext";
 import OwnerBottomNav from "@/components/OwnerBottomNav";
+import ProductCameraFlow, { type CapturedProduct } from "@/components/ProductCameraFlow";
+import { toast } from "@/hooks/use-toast";
 import { registerCartCommit, unregisterCartCommit, type EditCartItem } from "@/pages/EditCartPage";
 
 interface CartItem {
@@ -34,9 +36,7 @@ const OwnerRecordSalePage = () => {
   const [qty, setQty] = useState("1");
   const [showPreview, setShowPreview] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [cameraProduct, setCameraProduct] = useState<typeof products[0] | null>(null);
-  const [cameraQty, setCameraQty] = useState(1);
-  const [scanning, setScanning] = useState(true);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [customerNote, setCustomerNote] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -62,17 +62,6 @@ const OwnerRecordSalePage = () => {
     if (tab === "search" && searchRef.current) searchRef.current.focus();
   }, [tab]);
 
-  useEffect(() => {
-    if (tab === "camera" && scanning) {
-      const timer = setTimeout(() => {
-        setCameraProduct(products[Math.floor(Math.random() * products.length)]);
-        setCameraQty(1);
-        setScanning(false);
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [tab, scanning]);
-
   const addToCart = (product: typeof products[0], quantity: number) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.productId === product.id);
@@ -83,6 +72,22 @@ const OwnerRecordSalePage = () => {
 
   const removeFromCart = (productId: string) => setCart((prev) => prev.filter((c) => c.productId !== productId));
 
+  const handleCameraContinue = ({ name }: CapturedProduct) => {
+    setCameraOpen(false);
+    const match = findProductByName(name);
+    if (match) {
+      addToCart(match, 1);
+      toast({ title: "Added to cart", description: `${match.name} added.` });
+    } else {
+      setQuery(name);
+      setTab("search");
+      toast({
+        title: "Product not found",
+        description: `“${name}” is not in your inventory yet. Search or add it first.`,
+      });
+    }
+  };
+
   const handleSearchAdd = () => {
     if (!selectedProduct || !qty || parseInt(qty) < 1) return;
     addToCart(selectedProduct, parseInt(qty));
@@ -90,13 +95,6 @@ const OwnerRecordSalePage = () => {
     setQty("1");
     setQuery("");
     searchRef.current?.focus();
-  };
-
-  const handleCameraAdd = () => {
-    if (!cameraProduct) return;
-    addToCart(cameraProduct, cameraQty);
-    setCameraProduct(null);
-    setScanning(true);
   };
 
   const grandTotal = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
